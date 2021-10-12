@@ -5,8 +5,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 const sourcemaps = require(`gulp-sourcemaps`);
-const tsProject =
-    require(`gulp-typescript`).createProject(`tsconfig.build.json`);
+const tsProject = require(`gulp-typescript`).createProject(`tsconfig.build.json`);
 exports.default = () =>
     tsProject
         .src()

@@ -1,58 +1,64 @@
 {
-  "name": "another-trace-coordinator",
-  "version": "0.0.1",
-  "main": "bin/index.js",
-  "license": "MIT",
-  "scripts": {
-    "postinstall": "husky install",
-    "build": "rimraf bin && gulp",
-    "start": "NODE_PATH=bin NODE_ENV=production node bin/index.js",
-    "dev": "NODE_PATH=src ts-node-dev src/index.ts",
-    "lint": "eslint '*/**/*.{js,ts}' --quiet --fix",
-    "lint-staged": "lint-staged",
-    "test": "jest"
-  },
-  "lint-staged": {
-    "*.{js,ts}": [
-      "eslint --quiet --fix"
-    ]
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "moduleDirectories": [
-      "node_modules",
-      "src"
-    ]
-  },
-  "devDependencies": {
-    "@tsconfig/node14": "^1.0.1",
-    "@types/jest": "^26.0.23",
-    "@types/node": "^14.14.37",
-    "@typescript-eslint/eslint-plugin": "^4.22.0",
-    "@typescript-eslint/parser": "^4.22.0",
-    "eslint": "^7.24.0",
-    "eslint-config-prettier": "^8.1.0",
-    "eslint-plugin-prettier": "^3.3.1",
-    "gulp": "^4.0.2",
-    "gulp-sourcemaps": "^3.0.0",
-    "gulp-strip-code": "^0.1.4",
-    "gulp-typescript": "^6.0.0-alpha.1",
-    "gulp-uglify": "^3.0.2",
-    "husky": "^6.0.0",
-    "jest": "^27.0.4",
-    "lint-staged": "^10.5.4",
-    "prettier": "^2.2.1",
-    "rimraf": "^3.0.2",
-    "ts-jest": "^27.0.2",
-    "ts-node-dev": "^1.1.6",
-    "typescript": "^4.2.4"
-  },
-  "dependenciesDescription": {
-    "@tsconfig/node14": "Recommend tsconfig for node 14",
-    "@typescript-eslint/eslint-plugin": "ESLint rules for TS",
-    "eslint-config-prettier": "Turn off ESLint rules that conflict with Prettier",
-    "eslint-plugin-prettier": "Run Prettier as ESLint rule (no need to run prettier command) and show errors as ESLint errors",
-    "ts-jest": "Run Jest directly on TS",
-    "ts-node-dev": "Node dev server for TS"
-  }
+    "name": "another-trace-coordinator",
+    "version": "0.0.1",
+    "main": "bin/index.js",
+    "license": "MIT",
+    "scripts": {
+        "postinstall": "husky install",
+        "build": "rimraf bin && gulp",
+        "start": "NODE_PATH=bin NODE_ENV=production node bin/index.js",
+        "dev": "NODE_PATH=src ts-node-dev src/index.ts",
+        "lint": "eslint '*/**/*.{js,ts}' --quiet --fix",
+        "lint-staged": "lint-staged",
+        "test": "jest"
+    },
+    "lint-staged": {
+        "*.{js,ts}": [
+            "eslint --quiet --fix"
+        ]
+    },
+    "jest": {
+        "preset": "ts-jest",
+        "moduleDirectories": [
+            "node_modules",
+            "src"
+        ]
+    },
+    "dependencies": {
+        "@types/pino": "^6.3.11",
+        "fastify": "^3.22.0",
+        "fastify-cors": "^6.0.2",
+        "tsp-typescript-client": "https://github.com/haoadoresorange/tsp-typescript-client.git"
+    },
+    "devDependencies": {
+        "@tsconfig/node14": "^1.0.1",
+        "@types/jest": "^26.0.23",
+        "@types/node": "^14.14.37",
+        "@typescript-eslint/eslint-plugin": "^4.22.0",
+        "@typescript-eslint/parser": "^4.22.0",
+        "eslint": "^7.24.0",
+        "eslint-config-prettier": "^8.1.0",
+        "eslint-plugin-prettier": "^3.3.1",
+        "gulp": "^4.0.2",
+        "gulp-sourcemaps": "^3.0.0",
+        "gulp-strip-code": "^0.1.4",
+        "gulp-typescript": "^6.0.0-alpha.1",
+        "gulp-uglify": "^3.0.2",
+        "husky": "^6.0.0",
+        "jest": "^27.0.4",
+        "lint-staged": "^10.5.4",
+        "prettier": "^2.2.1",
+        "rimraf": "^3.0.2",
+        "ts-jest": "^27.0.2",
+        "ts-node-dev": "^1.1.6",
+        "typescript": "^4.2.4"
+    },
+    "dependenciesDescription": {
+        "@tsconfig/node14": "Recommend tsconfig for node 14",
+        "@typescript-eslint/eslint-plugin": "ESLint rules for TS",
+        "eslint-config-prettier": "Turn off ESLint rules that conflict with Prettier",
+        "eslint-plugin-prettier": "Run Prettier as ESLint rule (no need to run prettier command) and show errors as ESLint errors",
+        "ts-jest": "Run Jest directly on TS",
+        "ts-node-dev": "Node dev server for TS"
+    }
 }

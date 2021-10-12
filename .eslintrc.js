@@ -1,3 +1,20 @@
+const CLASS_PROPERTY = `classProperty`;
+const PARAMETER = `parameter`;
+const VARIABLE = `variable`;
+const METHOD = `method`;
+const PROPERTY = `property`;
+
+const filter = {
+    regex: `^(leadingUnderscore|trailingUnderscore|parserOptions|ecmaVersion|sourceType|ignorePatterns|trailingComma|tabWidth|printWidth)$`,
+    match: false,
+};
+const string_and_number = [`string`, `number`];
+const func = [`function`];
+const boolean = [`boolean`];
+const private = [`private`];
+const snake_and_upper = [`snake_case`, `UPPER_CASE`];
+const prefix = [`is_`, `should_`, `has_`, `can_`, `did_`, `will_`];
+
 // eslint-disable-next-line no-undef
 module.exports = {
     root: true, // By default ESLint keep looking for eslintrc up to root on filesystem, this is to stop it here
@@ -24,6 +41,7 @@ module.exports = {
         // See https://github.com/prettier/eslint-config-prettier/blob/main/CHANGELOG.md#version-800-2021-02-21
         `plugin:prettier/recommended`,
     ],
+    ignorePatterns: [`!.prettierrc.js`],
     rules: {
         quotes: [`error`, `backtick`],
         "prefer-const": [`error`],
@@ -31,51 +49,88 @@ module.exports = {
         "@typescript-eslint/naming-convention": [
             `error`,
             {
-                selector: `variable`,
+                selector: `default`,
+                filter,
                 format: [`snake_case`],
             },
             {
-                selector: `variable`,
-                modifiers: [`const`, `global`],
-                types: [`boolean`, `string`, `number`],
-                format: [`UPPER_CASE`],
-            }, 
-            {
-                selector: `variable`,
-                types: [`boolean`],
-                format: [`snake_case`],
-                prefix: [`is_`, `should_`, `has_`, `can_`, `did_`, `will_`],
-            },
-            {
-                selector: `variable`,
-                types: [`function`],
-                format: [`camelCase`],
-            },
-            {
-                selector: `typeLike`,
-                format: [`PascalCase`],
-            },
-            {
-                selector: `memberLike`,
-                format: [`camelCase`, `snake_case`], // no type is allowed with memberLike so we include 2 cases here
-                modifiers: [`private`],
+                selector: CLASS_PROPERTY,
+                types: string_and_number,
+                modifiers: [`private`, `readonly`],
+                format: snake_and_upper,
                 leadingUnderscore: `require`,
             },
             {
-                selector: `parameter`,
+                selector: CLASS_PROPERTY,
+                types: string_and_number,
+                modifiers: [`readonly`],
+                format: snake_and_upper,
+            },
+            {
+                selector: CLASS_PROPERTY,
+                types: boolean,
+                format: [`snake_case`],
+                prefix,
+            },
+            {
+                selector: CLASS_PROPERTY,
+                modifiers: private,
+                format: [`snake_case`],
+                leadingUnderscore: `require`,
+            },
+            {
+                selector: PARAMETER,
+                types: func,
+                format: [`camelCase`],
+            },
+            {
+                selector: PARAMETER,
                 modifiers: [`unused`],
                 format: null,
                 leadingUnderscore: `require`,
                 trailingUnderscore: `require`,
             },
             {
-                selector: `parameter`,
-                format: [`snake_case`],
+                selector: VARIABLE,
+                types: string_and_number,
+                modifiers: [`const`, `global`],
+                format: snake_and_upper,
             },
             {
-                selector: `parameter`,
-                types: [`function`],
+                selector: VARIABLE,
+                types: boolean,
+                format: [`snake_case`],
+                prefix,
+            },
+            {
+                selector: VARIABLE,
+                types: func,
                 format: [`camelCase`],
+            },
+            {
+                selector: METHOD,
+                modifiers: private,
+                format: [`camelCase`],
+                leadingUnderscore: `require`,
+            },
+            {
+                selector: METHOD,
+                format: [`camelCase`],
+            },
+            {
+                selector: PROPERTY,
+                filter,
+                types: string_and_number,
+                format: snake_and_upper,
+            },
+            {
+                selector: PROPERTY,
+                types: func,
+                format: [`camelCase`],
+            },
+            {
+                selector: `typeLike`,
+                format: [`PascalCase`],
             },
         ],
     },
