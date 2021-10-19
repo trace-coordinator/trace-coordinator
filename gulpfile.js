@@ -17,6 +17,6 @@ exports.default = () =>
             }),
         )
         .pipe(tsProject())
-        .js.pipe(require(`gulp-uglify`)())
+        .js.pipe(require(`gulp-uglify`)({ mangle: { keep_fnames: true } }))
         .pipe(sourcemaps.write())
         .pipe(require(`gulp`).dest(`bin`));

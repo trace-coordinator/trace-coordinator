@@ -4,15 +4,16 @@ const VARIABLE = `variable`;
 const METHOD = `method`;
 const PROPERTY = `property`;
 
-const filter = {
-    regex: `^(leadingUnderscore|trailingUnderscore|parserOptions|ecmaVersion|sourceType|ignorePatterns|trailingComma|tabWidth|printWidth)$`,
-    match: false,
-};
 const string_and_number = [`string`, `number`];
 const func = [`function`];
 const boolean = [`boolean`];
+
 const private = [`private`];
-const snake_and_upper = [`snake_case`, `UPPER_CASE`];
+
+const snake_case = [`snake_case`];
+const snake_and_UPPER = [`UPPER_CASE`, ...snake_case];
+const camelCase = [`camelCase`];
+const PascalCase = [`PascalCase`];
 const prefix = [`is_`, `should_`, `has_`, `can_`, `did_`, `will_`];
 
 // eslint-disable-next-line no-undef
@@ -45,43 +46,68 @@ module.exports = {
     rules: {
         quotes: [`error`, `backtick`],
         "prefer-const": [`error`],
+        "@typescript-eslint/restrict-template-expressions": [
+            `error`,
+            {
+                allowBoolean: true,
+                allowNullish: true,
+            },
+        ],
         // See https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/naming-convention.md
         "@typescript-eslint/naming-convention": [
             `error`,
             {
                 selector: `default`,
-                filter,
-                format: [`snake_case`],
+                filter: {
+                    regex: `^(${[`snake_and_UPPER`, ...camelCase, ...PascalCase].reduce(
+                        (s, v, i, array) => `${s}${v}${i < array.length - 1 ? `|` : ``}`,
+                        ``,
+                    )})$`,
+                    match: false,
+                },
+                format: snake_case,
             },
             {
                 selector: CLASS_PROPERTY,
                 types: string_and_number,
                 modifiers: [`private`, `readonly`],
-                format: snake_and_upper,
+                format: snake_and_UPPER,
                 leadingUnderscore: `require`,
             },
             {
                 selector: CLASS_PROPERTY,
                 types: string_and_number,
                 modifiers: [`readonly`],
-                format: snake_and_upper,
+                format: snake_and_UPPER,
             },
             {
                 selector: CLASS_PROPERTY,
                 types: boolean,
-                format: [`snake_case`],
+                modifiers: [`private`],
+                format: snake_case,
+                prefix,
+                leadingUnderscore: `require`,
+            },
+            {
+                selector: CLASS_PROPERTY,
+                types: boolean,
+                format: snake_case,
                 prefix,
             },
             {
                 selector: CLASS_PROPERTY,
                 modifiers: private,
-                format: [`snake_case`],
+                format: snake_case,
                 leadingUnderscore: `require`,
+            },
+            {
+                selector: `function`,
+                format: camelCase,
             },
             {
                 selector: PARAMETER,
                 types: func,
-                format: [`camelCase`],
+                format: camelCase,
             },
             {
                 selector: PARAMETER,
@@ -94,43 +120,46 @@ module.exports = {
                 selector: VARIABLE,
                 types: string_and_number,
                 modifiers: [`const`, `global`],
-                format: snake_and_upper,
+                format: snake_and_UPPER,
             },
             {
                 selector: VARIABLE,
                 types: boolean,
-                format: [`snake_case`],
+                format: snake_case,
                 prefix,
             },
             {
                 selector: VARIABLE,
                 types: func,
-                format: [`camelCase`],
+                format: camelCase,
             },
             {
                 selector: METHOD,
                 modifiers: private,
-                format: [`camelCase`],
+                format: camelCase,
                 leadingUnderscore: `require`,
             },
             {
                 selector: METHOD,
-                format: [`camelCase`],
-            },
-            {
-                selector: PROPERTY,
-                filter,
-                types: string_and_number,
-                format: snake_and_upper,
+                format: camelCase,
             },
             {
                 selector: PROPERTY,
                 types: func,
-                format: [`camelCase`],
+                format: camelCase,
+            },
+            {
+                selector: PROPERTY,
+                types: string_and_number,
+                format: [...snake_and_UPPER, ...camelCase, ...PascalCase],
+            },
+            {
+                selector: PROPERTY,
+                format: [...snake_case, ...camelCase, ...PascalCase],
             },
             {
                 selector: `typeLike`,
-                format: [`PascalCase`],
+                format: PascalCase,
             },
         ],
     },
