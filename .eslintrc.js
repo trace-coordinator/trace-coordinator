@@ -24,7 +24,7 @@ module.exports = {
         // This setting is required if you want to use rules which require type information.
         // Relative paths are interpreted relative to the current working directory if tsconfigRootDir is not set.
         // If you intend on running ESLint from directories other than the project root, you should consider using tsconfigRootDir
-        project: [`tsconfig.json`, `tsconfig.eslint.json`],
+        project: [`tsconfig.json`, `.eslint.tsconfig.json`],
         ecmaVersion: 2020, // Allows for the parsing of modern ECMAScript features
         sourceType: `module`, // Allows for the use of imports
     },

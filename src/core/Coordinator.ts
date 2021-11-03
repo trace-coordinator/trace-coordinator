@@ -41,7 +41,6 @@ class Coordinator {
     constructor() {
         this._tsps = config.trace_servers_configuration.map((tsc) => {
             const tsp = newOverloadedTspClient(tsc.url);
-            logger.profiling(`something`);
             tsp.checkHealth()
                 .then((r) => {
                     const rm = r.tryGetModel(
