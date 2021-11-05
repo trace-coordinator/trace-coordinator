@@ -43,11 +43,11 @@
         "trace-servers": [
             {
                 "url": "http://buildServer.dorsal.polymtl.ca:8080",
-                "traces-uri": "/home/ubuntu/trace-coordinator-test-set/cloned-traces/trace-server-0"
+                "traces-uri": "/home/ubuntu/trace-coordinator-test-set/original-clones/trace-server-0"
             },
             {
                 "url": "http://compute3.dorsal.polymtl.ca:8080",
-                "traces-uri": "/home/ubuntu/trace-coordinator-test-set/cloned-traces/trace-server-1"
+                "traces-uri": "/home/ubuntu/trace-coordinator-test-set/original-clones/trace-server-1"
             }
         ]
     },
@@ -55,7 +55,7 @@
         "fastify": "^3.22.0",
         "fastify-cors": "^6.0.2",
         "ts-trace": "https://github.com/haoadoresorange/ts-trace.git#ts-trace-v0.0.2-gitpkg",
-        "tsp-typescript-client": "https://github.com/haoadoresorange/tsp-typescript-client.git#tsp-typescript-client-v0.3.0-gitpkg"
+        "tsp-typescript-client": "https://github.com/haoadoresorange/tsp-typescript-client.git#tsp-typescript-client-v0.3.1-gitpkg"
     },
     "devDependencies": {
         "@tsconfig/node14": "^1.0.1",

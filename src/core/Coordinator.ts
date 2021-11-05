@@ -72,19 +72,21 @@ class Coordinator {
                 Promise.all(
                     readdirSync(config.trace_servers_configuration[i][`traces-uri`], {
                         withFileTypes: true,
-                    }).flatMap((dirent) =>
-                        dirent.isDirectory()
+                    }).flatMap((dirent) => {
+                        const uri = path.resolve(
+                            config.trace_servers_configuration[i][`traces-uri`],
+                            dirent.name,
+                        );
+                        logger.debug(`Import ${uri} to trace server ${tsp.trace_server_url}`);
+                        return dirent.isDirectory()
                             ? tsp.openTrace(
                                   new Query({
                                       name: dirent.name,
-                                      uri: path.resolve(
-                                          config.trace_servers_configuration[i][`traces-uri`],
-                                          dirent.name,
-                                      ),
+                                      uri,
                                   }),
                               )
-                            : [],
-                    ),
+                            : [];
+                    }),
                 )
                     .then((rs) =>
                         tsp.createExperiment(

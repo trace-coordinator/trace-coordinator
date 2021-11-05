@@ -24,8 +24,16 @@ declare global {
     interface String {
         capitalizeOnlyFirstLetter(): string;
     }
+
+    interface BigInt {
+        toJSON(): string;
+    }
 }
 String.prototype.capitalizeOnlyFirstLetter = function () {
     const s = this.toLowerCase();
     return s.charAt(0).toUpperCase() + s.slice(1);
+};
+
+BigInt.prototype.toJSON = function () {
+    return this.toString();
 };
