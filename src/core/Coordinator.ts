@@ -1,4 +1,4 @@
-import { Query, TspClient, TspClientResponse } from "tsp-typescript-client";
+import { GenericResponse, Query, TspClient, TspClientResponse } from "tsp-typescript-client";
 import config from "config";
 import { WithTraceServerUrl } from "types/tsp";
 import { logger } from "logger";
@@ -26,14 +26,19 @@ class TraceServerError extends Error {
         super(msg);
     }
 }
-const newTraceServerErrorCallback = (s: string) => (msg: string, status_code?: number) =>
-    new TraceServerError(`${s} ${msg}`, status_code);
+const newTraceServerErrorCallback = (prefix: string) => (msg: string, status_code?: number) =>
+    new TraceServerError(`${prefix} ${msg}`, status_code);
 const prefixErrorMsg = (url: string) => `[Trace server ${url}] `;
 
 const newOverloadedTspClient = (url: string) => {
     const tsp = new TspClient(url + `/tsp/api`) as WithTraceServerUrl<TspClient>;
     tsp.trace_server_url = url;
     return tsp;
+};
+
+const handleXyModelNull = (s: string) => (r: WithTraceServerUrl<unknown>) => {
+    if ((r as WithTraceServerUrl<GenericResponse<unknown>>).model === null)
+        throw new TraceServerError(`${prefixErrorMsg(r.trace_server_url)} XY ${s} is null`);
 };
 
 class Coordinator {
@@ -109,7 +114,9 @@ class Coordinator {
     public async fetchExperiments() {
         // const end = logger.profiling(this.fetchExperiments.name);
         const { E } = tracer.B({ name: this.fetchExperiments.name });
-        const r = (await this._fetch(`fetchExperiments`)) as AggregateExperimentsPayload[`response_models`];
+        const r = (await this._fetch({
+            op: `fetchExperiments`,
+        })) as AggregateExperimentsPayload[`response_models`];
         // end();
         E();
         return r;
@@ -119,7 +126,7 @@ class Coordinator {
         // const end = logger.profiling(this.fetchExperiment.name);
         const { E } = tracer.B({ name: this.fetchExperiment.name });
         const r = (await this._fetch(
-            `fetchExperiment`,
+            { op: `fetchExperiment` },
             exp_uuid,
         )) as AggregateExperimentPayload[`response_models`];
         // end();
@@ -131,7 +138,7 @@ class Coordinator {
         // const end = logger.profiling(this.fetchOutputs.name);
         const { E } = tracer.B({ name: this.fetchOutputs.name });
         const r = (await this._fetch(
-            `experimentOutputs`,
+            { op: `experimentOutputs` },
             exp_uuid,
         )) as AggregateOutputsPayload[`response_models`];
         // end();
@@ -143,7 +150,7 @@ class Coordinator {
         // const end = logger.profiling(this.fetchXYTree.name);
         const { E } = tracer.B({ name: this.fetchXYTree.name });
         const r = (await this._fetch(
-            `fetchXYTree`,
+            { op: `fetchXYTree`, cb: handleXyModelNull(`tree model`) },
             exp_uuid,
             output_id,
             query,
@@ -157,7 +164,7 @@ class Coordinator {
         // const end = logger.profiling(this.fetchXY.name);
         const { E } = tracer.B({ name: this.fetchXY.name });
         const r = (await this._fetch(
-            `fetchXY`,
+            { op: `fetchXY`, cb: handleXyModelNull(`model`) },
             exp_uuid,
             output_id,
             query,
@@ -167,7 +174,10 @@ class Coordinator {
         return r;
     }
 
-    private _fetch(op: string, ...args: unknown[]) {
+    private _fetch(
+        { op, cb }: { op: string; cb?: (r: WithTraceServerUrl<unknown>) => void },
+        ...args: unknown[]
+    ) {
         // @ts-expect-error implicit any is allowed because type is checked anyway
         if (typeof this._tsps[0][op] !== `function`) {
             throw new TraceCoordinatorError(`Method ${op} not exist on TSP client`);
@@ -181,6 +191,7 @@ class Coordinator {
                         newTraceServerErrorCallback(prefixErrorMsg(tsp.trace_server_url)),
                     ) as WithTraceServerUrl<unknown>;
                     rmwurl.trace_server_url = tsp.trace_server_url;
+                    if (cb) cb(rmwurl);
                     return rmwurl;
                 }),
             ),
