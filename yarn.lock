@@ -5726,6 +5726,10 @@ ts-node@^9.0.0:
     source-map-support "^0.5.17"
     yn "3.1.1"
 
+"ts-trace@https://github.com/haoadoresorange/ts-trace.git#ts-trace-v0.0.2-gitpkg":
+  version "0.0.2"
+  resolved "https://github.com/haoadoresorange/ts-trace.git#4af9c236866dd7f859be12f44aa7ac7f71cdb61c"
+
 tsconfig@^7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/tsconfig/-/tsconfig-7.0.0.tgz#84538875a4dc216e5c4a5432b3a4dec3d54e91b7"

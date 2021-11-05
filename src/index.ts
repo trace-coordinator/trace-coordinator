@@ -11,6 +11,16 @@ import fastify_cors from "fastify-cors";
 import { server } from "server";
 import { logger } from "logger";
 
+import trace_events from "trace_events";
+const tracing = trace_events.createTracing({
+    categories: [`node.perf`, `node`, `node.bootstrap`, `node.console`, `node.environment`, `node.vm.script`],
+});
+tracing.enable();
+process.on(`SIGINT`, function () {
+    tracing.disable();
+    process.exit();
+});
+
 void server.register(fastify_cors);
 
 /* <DEV-ONLY> */

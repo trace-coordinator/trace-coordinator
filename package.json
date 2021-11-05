@@ -39,7 +39,7 @@
     },
     "trace-coordinator": {
         "port": 8080,
-        "profiling": true,
+        "profiling": false,
         "trace-servers": [
             {
                 "url": "http://buildServer.dorsal.polymtl.ca:8080",
@@ -54,6 +54,7 @@
     "dependencies": {
         "fastify": "^3.22.0",
         "fastify-cors": "^6.0.2",
+        "ts-trace": "https://github.com/haoadoresorange/ts-trace.git#ts-trace-v0.0.2-gitpkg",
         "tsp-typescript-client": "https://github.com/haoadoresorange/tsp-typescript-client.git#tsp-typescript-client-v0.3.0-gitpkg"
     },
     "devDependencies": {
@@ -76,8 +77,8 @@
         "jest": "^27.2.5",
         "lint-staged": "^11.2.3",
         "merge-stream": "^2.0.0",
-        "pinst": "^2.1.6",
         "pino-pretty": "^7.1.0",
+        "pinst": "^2.1.6",
         "prettier": "^2.4.1",
         "rimraf": "^3.0.2",
         "ts-jest": "^27.0.5",

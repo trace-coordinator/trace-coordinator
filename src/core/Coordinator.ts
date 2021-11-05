@@ -12,6 +12,7 @@ import {
 import { readdirSync } from "fs";
 import path from "path";
 import { exitWithError } from "lib";
+import { ts_trace } from "tracer";
 
 class TraceCoordinatorError extends Error {
     readonly name = TraceCoordinatorError.name;
@@ -104,53 +105,63 @@ class Coordinator {
     }
 
     public async fetchExperiments() {
-        const end = logger.profiling(this.fetchExperiments.name);
+        // const end = logger.profiling(this.fetchExperiments.name);
+        const { E } = ts_trace.B({ name: this.fetchExperiments.name });
         const r = (await this._fetch(`fetchExperiments`)) as AggregateExperimentsPayload[`response_models`];
-        end();
+        // end();
+        E();
         return r;
     }
 
     public async fetchExperiment(exp_uuid: string) {
-        const end = logger.profiling(this.fetchExperiment.name);
+        // const end = logger.profiling(this.fetchExperiment.name);
+        const { E } = ts_trace.B({ name: this.fetchExperiment.name });
         const r = (await this._fetch(
             `fetchExperiment`,
             exp_uuid,
         )) as AggregateExperimentPayload[`response_models`];
-        end();
+        // end();
+        E();
         return r;
     }
 
     public async fetchOutputs(exp_uuid: string) {
-        const end = logger.profiling(this.fetchOutputs.name);
+        // const end = logger.profiling(this.fetchOutputs.name);
+        const { E } = ts_trace.B({ name: this.fetchOutputs.name });
         const r = (await this._fetch(
             `experimentOutputs`,
             exp_uuid,
         )) as AggregateOutputsPayload[`response_models`];
-        end();
+        // end();
+        E();
         return r;
     }
 
     public async fetchXYTree(exp_uuid: string, output_id: string, query: Query) {
-        const end = logger.profiling(this.fetchXYTree.name);
+        // const end = logger.profiling(this.fetchXYTree.name);
+        const { E } = ts_trace.B({ name: this.fetchXYTree.name });
         const r = (await this._fetch(
             `fetchXYTree`,
             exp_uuid,
             output_id,
             query,
         )) as AggregateXYTreePayload[`response_models`];
-        end();
+        // end();
+        E();
         return r;
     }
 
     public async fetchXY(exp_uuid: string, output_id: string, query: Query) {
-        const end = logger.profiling(this.fetchXY.name);
+        // const end = logger.profiling(this.fetchXY.name);
+        const { E } = ts_trace.B({ name: this.fetchXY.name });
         const r = (await this._fetch(
             `fetchXY`,
             exp_uuid,
             output_id,
             query,
         )) as AggregateXYModelPayload[`response_models`];
-        end();
+        // end();
+        E();
         return r;
     }
 

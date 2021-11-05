@@ -134,6 +134,12 @@ module.exports = {
                 format: camelCase,
             },
             {
+                selector: VARIABLE,
+                types: func,
+                modifiers: [`destructured`],
+                format: [...snake_case, ...camelCase, ...PascalCase],
+            },
+            {
                 selector: METHOD,
                 modifiers: private,
                 format: camelCase,

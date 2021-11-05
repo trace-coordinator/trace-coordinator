@@ -2,9 +2,11 @@ import { AggregateExperimentPayload } from "types/payload";
 import { Trace, ResponseStatus, Experiment } from "tsp-typescript-client";
 import { aggregateStatus } from "core/aggregators/lib";
 import { logger } from "logger";
+import { ts_trace } from "tracer";
 
 export const aggregateExperiment = (payload: AggregateExperimentPayload): Experiment => {
-    const end = logger.profiling(aggregateExperiment.name);
+    // const end = logger.profiling(aggregateExperiment.name);
+    const { E } = ts_trace.B({ name: aggregateExperiment.name });
     const e = {
         start: -1n,
         end: 0n,
@@ -30,6 +32,7 @@ export const aggregateExperiment = (payload: AggregateExperimentPayload): Experi
         indexingStatus: aggregateStatus(status) as string,
         ...e,
     };
-    end();
+    // end();
+    E();
     return r;
 };

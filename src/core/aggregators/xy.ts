@@ -1,5 +1,6 @@
 import { Time } from "lib/Time";
 import { logger } from "logger";
+import { ts_trace } from "tracer";
 import { Entry, ResponseStatus, XYSeries } from "tsp-typescript-client";
 import { AggregateXYModelPayload, AggregateXYTreePayload } from "types/payload";
 import { XYModelResponseModel, XYTreeResponseModel } from "types/tsp";
@@ -14,7 +15,8 @@ export const aggregateXyTree = (payload: AggregateXYTreePayload): XYTreeResponse
     if (
         payload.output_id === `org.eclipse.tracecompass.analysis.os.linux.core.cpuusage.CpuUsageDataProvider`
     ) {
-        const end = logger.profiling(aggregateXyTree.name);
+        // const end = logger.profiling(aggregateXyTree.name);
+        const { E } = ts_trace.B({ name: aggregateXyTree.name });
         const status = new Set<ResponseStatus>();
         status.add(payload.response_models[0].status);
         payload.response_models[0].model.entries.map((e, i) => {
@@ -47,7 +49,8 @@ export const aggregateXyTree = (payload: AggregateXYTreePayload): XYTreeResponse
         payload.response_models[0].status = aggregateStatus(status);
         payload.response_models[0].statusMessage =
             payload.response_models[0].status.capitalizeOnlyFirstLetter();
-        end();
+        // end();
+        E();
         return payload.response_models[0];
     }
     throw new XyAggregationError(`XY tree aggregation not exist for output id ${payload.output_id}`);
@@ -58,7 +61,8 @@ export const aggregateXyModel = (payload: AggregateXYModelPayload): XYModelRespo
     if (
         payload.output_id === `org.eclipse.tracecompass.analysis.os.linux.core.cpuusage.CpuUsageDataProvider`
     ) {
-        const end = logger.profiling(aggregateXyModel.name);
+        // const end = logger.profiling(aggregateXyModel.name);
+        const { E } = ts_trace.B({ name: aggregateXyModel.name });
         const status = new Set<ResponseStatus>();
         status.add(payload.response_models[0].status);
         payload.response_models[0].model.series.map((se, i) => {
@@ -90,7 +94,8 @@ export const aggregateXyModel = (payload: AggregateXYModelPayload): XYModelRespo
         payload.response_models[0].status = aggregateStatus(status);
         payload.response_models[0].statusMessage =
             payload.response_models[0].status.capitalizeOnlyFirstLetter();
-        end();
+        // end();
+        E();
         return payload.response_models[0];
     }
     throw new XyAggregationError(`XY model aggregation not exist for output id ${payload.output_id}`);
