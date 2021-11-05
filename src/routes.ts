@@ -4,12 +4,12 @@ import { aggregate } from "core/aggregators";
 import { PAYLOAD_TYPE } from "types/payload";
 import { logger } from "logger";
 import { Query } from "tsp-typescript-client";
-import { ts_trace } from "tracer";
+import { tracer } from "tracer";
 
 export const experimentsRoute: FastifyPluginCallback = (fastify, opts, done) => {
     fastify.get(`/experiments`, opts, async () => {
         // const end = logger.profiling(`request GET /experiments`);
-        const { E } = ts_trace.B({ name: `request GET /experiments` });
+        const { E } = tracer.B({ name: `request GET /experiments` });
         const r = aggregate({
             type: PAYLOAD_TYPE.AGGREGATE_EXPERIMENTS,
             response_models: await coordinator.fetchExperiments(),
@@ -24,7 +24,7 @@ export const experimentsRoute: FastifyPluginCallback = (fastify, opts, done) => 
 export const experimentRoute: FastifyPluginCallback = (fastify, opts, done) => {
     fastify.get<{ Params: { exp_uuid: string } }>(`/experiments/:exp_uuid`, opts, async (request) => {
         // const end = logger.profiling(`request GET /experiments/${request.params.exp_uuid}`);
-        const { E } = ts_trace.B({ name: `request GET /experiments/${request.params.exp_uuid}` });
+        const { E } = tracer.B({ name: `request GET /experiments/${request.params.exp_uuid}` });
         const r = aggregate({
             type: PAYLOAD_TYPE.AGGREGATE_EXPERIMENT,
             exp_uuid: request.params.exp_uuid,
@@ -40,7 +40,7 @@ export const experimentRoute: FastifyPluginCallback = (fastify, opts, done) => {
 export const outputsRoute: FastifyPluginCallback = (fastify, opts, done) => {
     fastify.get<{ Params: { exp_uuid: string } }>(`/experiments/:exp_uuid/outputs`, opts, async (request) => {
         // const end = logger.profiling(`request GET /experiments/${request.params.exp_uuid}/outputs`);
-        const { E } = ts_trace.B({ name: `request GET /experiments/${request.params.exp_uuid}/outputs` });
+        const { E } = tracer.B({ name: `request GET /experiments/${request.params.exp_uuid}/outputs` });
         const r = aggregate({
             type: PAYLOAD_TYPE.AGGREGATE_OUTPUTS,
             exp_uuid: request.params.exp_uuid,
@@ -61,7 +61,7 @@ export const xyRoute: FastifyPluginCallback = (fastify, opts, done) => {
         // const end = logger.profiling(
         //     `request GET /experiments/${request.params.exp_uuid}/outputs/XY/${request.params.output_id}/tree`,
         // );
-        const { E } = ts_trace.B({
+        const { E } = tracer.B({
             name: `request GET /experiments/${request.params.exp_uuid}/outputs/XY/${request.params.output_id}/tree`,
         });
         const r = aggregate({
@@ -86,7 +86,7 @@ export const xyRoute: FastifyPluginCallback = (fastify, opts, done) => {
         // const end = logger.profiling(
         //     `request GET /experiments/${request.params.exp_uuid}/outputs/XY/${request.params.output_id}/xy`,
         // );
-        const { E } = ts_trace.B({
+        const { E } = tracer.B({
             name: `request GET /experiments/${request.params.exp_uuid}/outputs/XY/${request.params.output_id}/xy`,
         });
         const r = aggregate({

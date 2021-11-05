@@ -12,7 +12,7 @@ import {
 import { readdirSync } from "fs";
 import path from "path";
 import { exitWithError } from "lib";
-import { ts_trace } from "tracer";
+import { tracer } from "tracer";
 
 class TraceCoordinatorError extends Error {
     readonly name = TraceCoordinatorError.name;
@@ -106,7 +106,7 @@ class Coordinator {
 
     public async fetchExperiments() {
         // const end = logger.profiling(this.fetchExperiments.name);
-        const { E } = ts_trace.B({ name: this.fetchExperiments.name });
+        const { E } = tracer.B({ name: this.fetchExperiments.name });
         const r = (await this._fetch(`fetchExperiments`)) as AggregateExperimentsPayload[`response_models`];
         // end();
         E();
@@ -115,7 +115,7 @@ class Coordinator {
 
     public async fetchExperiment(exp_uuid: string) {
         // const end = logger.profiling(this.fetchExperiment.name);
-        const { E } = ts_trace.B({ name: this.fetchExperiment.name });
+        const { E } = tracer.B({ name: this.fetchExperiment.name });
         const r = (await this._fetch(
             `fetchExperiment`,
             exp_uuid,
@@ -127,7 +127,7 @@ class Coordinator {
 
     public async fetchOutputs(exp_uuid: string) {
         // const end = logger.profiling(this.fetchOutputs.name);
-        const { E } = ts_trace.B({ name: this.fetchOutputs.name });
+        const { E } = tracer.B({ name: this.fetchOutputs.name });
         const r = (await this._fetch(
             `experimentOutputs`,
             exp_uuid,
@@ -139,7 +139,7 @@ class Coordinator {
 
     public async fetchXYTree(exp_uuid: string, output_id: string, query: Query) {
         // const end = logger.profiling(this.fetchXYTree.name);
-        const { E } = ts_trace.B({ name: this.fetchXYTree.name });
+        const { E } = tracer.B({ name: this.fetchXYTree.name });
         const r = (await this._fetch(
             `fetchXYTree`,
             exp_uuid,
@@ -153,7 +153,7 @@ class Coordinator {
 
     public async fetchXY(exp_uuid: string, output_id: string, query: Query) {
         // const end = logger.profiling(this.fetchXY.name);
-        const { E } = ts_trace.B({ name: this.fetchXY.name });
+        const { E } = tracer.B({ name: this.fetchXY.name });
         const r = (await this._fetch(
             `fetchXY`,
             exp_uuid,
