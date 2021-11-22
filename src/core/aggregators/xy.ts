@@ -1,5 +1,4 @@
 import { Time } from "lib/Time";
-import { logger } from "logger";
 import { tracer } from "tracer";
 import { Entry, ResponseStatus, XYSeries } from "tsp-typescript-client";
 import { AggregateXYModelPayload, AggregateXYTreePayload } from "types/payload";
@@ -15,7 +14,6 @@ export const aggregateXyTree = (payload: AggregateXYTreePayload): XYTreeResponse
     if (
         payload.output_id === `org.eclipse.tracecompass.analysis.os.linux.core.cpuusage.CpuUsageDataProvider`
     ) {
-        // const end = logger.profiling(aggregateXyTree.name);
         const { E } = tracer.B({ name: aggregateXyTree.name });
         const status = new Set<ResponseStatus>();
         status.add(payload.response_models[0].status);
@@ -49,7 +47,6 @@ export const aggregateXyTree = (payload: AggregateXYTreePayload): XYTreeResponse
         payload.response_models[0].status = aggregateStatus(status);
         payload.response_models[0].statusMessage =
             payload.response_models[0].status.capitalizeOnlyFirstLetter();
-        // end();
         E();
         return payload.response_models[0];
     }
@@ -61,7 +58,6 @@ export const aggregateXyModel = (payload: AggregateXYModelPayload): XYModelRespo
     if (
         payload.output_id === `org.eclipse.tracecompass.analysis.os.linux.core.cpuusage.CpuUsageDataProvider`
     ) {
-        // const end = logger.profiling(aggregateXyModel.name);
         const { E } = tracer.B({ name: aggregateXyModel.name });
         const status = new Set<ResponseStatus>();
         status.add(payload.response_models[0].status);
@@ -94,7 +90,6 @@ export const aggregateXyModel = (payload: AggregateXYModelPayload): XYModelRespo
         payload.response_models[0].status = aggregateStatus(status);
         payload.response_models[0].statusMessage =
             payload.response_models[0].status.capitalizeOnlyFirstLetter();
-        // end();
         E();
         return payload.response_models[0];
     }

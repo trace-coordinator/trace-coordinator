@@ -112,42 +112,35 @@ class Coordinator {
     }
 
     public async fetchExperiments() {
-        // const end = logger.profiling(this.fetchExperiments.name);
         const { E } = tracer.B({ name: this.fetchExperiments.name });
         const r = (await this._fetch({
             op: `fetchExperiments`,
         })) as AggregateExperimentsPayload[`response_models`];
-        // end();
         E();
         return r;
     }
 
     public async fetchExperiment(exp_uuid: string) {
-        // const end = logger.profiling(this.fetchExperiment.name);
         const { E } = tracer.B({ name: this.fetchExperiment.name });
         const r = (await this._fetch(
             { op: `fetchExperiment` },
             exp_uuid,
         )) as AggregateExperimentPayload[`response_models`];
-        // end();
         E();
         return r;
     }
 
     public async fetchOutputs(exp_uuid: string) {
-        // const end = logger.profiling(this.fetchOutputs.name);
         const { E } = tracer.B({ name: this.fetchOutputs.name });
         const r = (await this._fetch(
             { op: `experimentOutputs` },
             exp_uuid,
         )) as AggregateOutputsPayload[`response_models`];
-        // end();
         E();
         return r;
     }
 
     public async fetchXYTree(exp_uuid: string, output_id: string, query: Query) {
-        // const end = logger.profiling(this.fetchXYTree.name);
         const { E } = tracer.B({ name: this.fetchXYTree.name });
         const r = (await this._fetch(
             { op: `fetchXYTree`, cb: handleXyModelNull(`tree model`) },
@@ -155,13 +148,11 @@ class Coordinator {
             output_id,
             query,
         )) as AggregateXYTreePayload[`response_models`];
-        // end();
         E();
         return r;
     }
 
     public async fetchXY(exp_uuid: string, output_id: string, query: Query) {
-        // const end = logger.profiling(this.fetchXY.name);
         const { E } = tracer.B({ name: this.fetchXY.name });
         const r = (await this._fetch(
             { op: `fetchXY`, cb: handleXyModelNull(`model`) },
@@ -169,7 +160,6 @@ class Coordinator {
             output_id,
             query,
         )) as AggregateXYModelPayload[`response_models`];
-        // end();
         E();
         return r;
     }
@@ -191,7 +181,7 @@ class Coordinator {
                         newTraceServerErrorCallback(prefixErrorMsg(tsp.trace_server_url)),
                     ) as WithTraceServerUrl<unknown>;
                     rmwurl.trace_server_url = tsp.trace_server_url;
-                    if (cb) cb(rmwurl);
+                    cb?.(rmwurl);
                     return rmwurl;
                 }),
             ),

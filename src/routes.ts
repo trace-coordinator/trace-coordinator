@@ -2,20 +2,17 @@ import { FastifyPluginCallback } from "fastify";
 import { coordinator } from "core/Coordinator";
 import { aggregate } from "core/aggregators";
 import { PAYLOAD_TYPE } from "types/payload";
-import { logger } from "logger";
 import { Query } from "tsp-typescript-client";
 import { tracer } from "tracer";
 
 export const experimentsRoute: FastifyPluginCallback = (fastify, opts, done) => {
     fastify.get(`/experiments`, opts, async () => {
-        // const end = logger.profiling(`request GET /experiments`);
         const { E } = tracer.B({ name: `request GET /experiments` });
         const r = aggregate({
             type: PAYLOAD_TYPE.AGGREGATE_EXPERIMENTS,
             response_models: await coordinator.fetchExperiments(),
         });
         E();
-        // end();
         return r;
     });
     done();
@@ -23,14 +20,12 @@ export const experimentsRoute: FastifyPluginCallback = (fastify, opts, done) => 
 
 export const experimentRoute: FastifyPluginCallback = (fastify, opts, done) => {
     fastify.get<{ Params: { exp_uuid: string } }>(`/experiments/:exp_uuid`, opts, async (request) => {
-        // const end = logger.profiling(`request GET /experiments/${request.params.exp_uuid}`);
         const { E } = tracer.B({ name: `request GET /experiments/${request.params.exp_uuid}` });
         const r = aggregate({
             type: PAYLOAD_TYPE.AGGREGATE_EXPERIMENT,
             exp_uuid: request.params.exp_uuid,
             response_models: await coordinator.fetchExperiment(request.params.exp_uuid),
         });
-        // end();
         E();
         return r;
     });
@@ -39,14 +34,12 @@ export const experimentRoute: FastifyPluginCallback = (fastify, opts, done) => {
 
 export const outputsRoute: FastifyPluginCallback = (fastify, opts, done) => {
     fastify.get<{ Params: { exp_uuid: string } }>(`/experiments/:exp_uuid/outputs`, opts, async (request) => {
-        // const end = logger.profiling(`request GET /experiments/${request.params.exp_uuid}/outputs`);
         const { E } = tracer.B({ name: `request GET /experiments/${request.params.exp_uuid}/outputs` });
         const r = aggregate({
             type: PAYLOAD_TYPE.AGGREGATE_OUTPUTS,
             exp_uuid: request.params.exp_uuid,
             response_models: await coordinator.fetchOutputs(request.params.exp_uuid),
         });
-        // end();
         E();
         return r;
     });
@@ -58,9 +51,6 @@ export const xyRoute: FastifyPluginCallback = (fastify, opts, done) => {
         Body: Query;
         Params: { exp_uuid: string; output_id: string };
     }>(`/experiments/:exp_uuid/outputs/XY/:output_id/tree`, opts, async (request) => {
-        // const end = logger.profiling(
-        //     `request GET /experiments/${request.params.exp_uuid}/outputs/XY/${request.params.output_id}/tree`,
-        // );
         const { E } = tracer.B({
             name: `request GET /experiments/${request.params.exp_uuid}/outputs/XY/${request.params.output_id}/tree`,
         });
@@ -74,7 +64,6 @@ export const xyRoute: FastifyPluginCallback = (fastify, opts, done) => {
                 request.body,
             ),
         });
-        // end();
         E();
         return r;
     });
@@ -83,9 +72,6 @@ export const xyRoute: FastifyPluginCallback = (fastify, opts, done) => {
         Body: Query;
         Params: { exp_uuid: string; output_id: string };
     }>(`/experiments/:exp_uuid/outputs/XY/:output_id/xy`, opts, async (request) => {
-        // const end = logger.profiling(
-        //     `request GET /experiments/${request.params.exp_uuid}/outputs/XY/${request.params.output_id}/xy`,
-        // );
         const { E } = tracer.B({
             name: `request GET /experiments/${request.params.exp_uuid}/outputs/XY/${request.params.output_id}/xy`,
         });
@@ -99,7 +85,6 @@ export const xyRoute: FastifyPluginCallback = (fastify, opts, done) => {
                 request.body,
             ),
         });
-        // end();
         E();
         return r;
     });
