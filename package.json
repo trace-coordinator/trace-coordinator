@@ -54,7 +54,7 @@
         "fastify": "^3.22.0",
         "fastify-cors": "^6.0.2",
         "ts-trace": "https://github.com/haoadoresorange/ts-trace.git#ts-trace-v0.0.2-gitpkg",
-        "tsp-typescript-client": "https://github.com/haoadoresorange/tsp-typescript-client.git#tsp-typescript-client-v0.3.1-gitpkg"
+        "tsp-typescript-client": "https://github.com/haoadoresorange/tsp-typescript-client.git#tsp-typescript-client-v0.3.2-gitpkg"
     },
     "devDependencies": {
         "@tsconfig/node14": "^1.0.1",

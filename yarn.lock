@@ -5745,9 +5745,9 @@ tslib@^1.8.1, tslib@^1.9.0:
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.14.1.tgz#cf2d38bdc34a134bcaf1091c41f6619e2f672d00"
   integrity sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==
 
-"tsp-typescript-client@https://github.com/haoadoresorange/tsp-typescript-client.git#tsp-typescript-client-v0.3.1-gitpkg":
-  version "0.3.1"
-  resolved "https://github.com/haoadoresorange/tsp-typescript-client.git#0b18b8e8704dd3f88cc2a645c04382130a0058a2"
+"tsp-typescript-client@https://github.com/haoadoresorange/tsp-typescript-client.git#tsp-typescript-client-v0.3.2-gitpkg":
+  version "0.3.2"
+  resolved "https://github.com/haoadoresorange/tsp-typescript-client.git#af6d34c5379949ed0a7e8e2b93b2e07b8ddd2f23"
   dependencies:
     node-fetch "^2.5.0"
     rimraf latest
