@@ -39,7 +39,6 @@
     },
     "trace-coordinator": {
         "port": 8080,
-        "profiling": false,
         "trace-servers": [
             {
                 "url": "http://buildServer.dorsal.polymtl.ca:8080",

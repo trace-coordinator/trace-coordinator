@@ -12,7 +12,6 @@ type TraceServerConfiguration = {
 
 let config = {} as {
     port: number;
-    profiling: boolean;
     trace_servers_configuration: TraceServerConfiguration[];
 };
 
@@ -24,8 +23,6 @@ try {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         port: Number(package_json?.[`trace-coordinator`]?.port) || 8080,
         // TODO: eslint bug: optional chain is used here so it shouldn't be unsafe access
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        profiling: Boolean(package_json?.[`trace-coordinator`]?.profiling),
         trace_servers_configuration: (() => {
             // TODO: eslint bug: optional chain is used here so it shouldn't be unsafe access
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
