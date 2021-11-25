@@ -1,3 +1,4 @@
-import { server } from "server";
+import { fastify } from "server";
+import { Logger } from "pino";
 
-export const logger = server.log;
+export const logger = fastify.log as Logger;

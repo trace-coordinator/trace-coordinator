@@ -53,12 +53,14 @@
     "dependencies": {
         "fastify": "^3.22.0",
         "fastify-cors": "^6.0.2",
+        "json-bigint": "^1.0.0",
         "ts-trace": "https://github.com/haoadoresorange/ts-trace.git#ts-trace-v0.0.2-gitpkg",
         "tsp-typescript-client": "https://github.com/haoadoresorange/tsp-typescript-client.git#tsp-typescript-client-v0.3.2-gitpkg"
     },
     "devDependencies": {
         "@tsconfig/node14": "^1.0.1",
         "@types/jest": "^27.0.2",
+        "@types/json-bigint": "^1.0.1",
         "@types/node": "^16.10.9",
         "@types/pino": "^6.3.11",
         "@typescript-eslint/eslint-plugin": "^5.0.0",

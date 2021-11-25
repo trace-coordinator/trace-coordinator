@@ -26,7 +26,7 @@ class TraceServerError extends Error {
         super(msg);
     }
 }
-const newTraceServerErrorCallback = (prefix: string) => (msg: string, status_code?: number) =>
+const newTraceServerErrorFactory = (prefix: string) => (msg: string, status_code?: number) =>
     new TraceServerError(`${prefix} ${msg}`, status_code);
 const prefixErrorMsg = (url: string) => `[Trace server ${url}] `;
 
@@ -50,7 +50,7 @@ class Coordinator {
             tsp.checkHealth()
                 .then((r) => {
                     const rm = r.tryGetModel(
-                        newTraceServerErrorCallback(prefixErrorMsg(tsp.trace_server_url)),
+                        newTraceServerErrorFactory(prefixErrorMsg(tsp.trace_server_url)),
                     );
                     if (rm.status !== `UP`)
                         throw new TraceServerError(
@@ -100,7 +100,7 @@ class Coordinator {
                                 traces: rs.map(
                                     (r) =>
                                         r.tryGetModel(
-                                            newTraceServerErrorCallback(prefixErrorMsg(tsp.trace_server_url)),
+                                            newTraceServerErrorFactory(prefixErrorMsg(tsp.trace_server_url)),
                                         ).UUID,
                                 ),
                             }),
@@ -178,7 +178,7 @@ class Coordinator {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
                 (tsp[op](...args) as Promise<TspClientResponse<unknown>>).then((r) => {
                     const rmwurl = r.tryGetModel(
-                        newTraceServerErrorCallback(prefixErrorMsg(tsp.trace_server_url)),
+                        newTraceServerErrorFactory(prefixErrorMsg(tsp.trace_server_url)),
                     ) as WithTraceServerUrl<unknown>;
                     rmwurl.trace_server_url = tsp.trace_server_url;
                     cb?.(rmwurl);

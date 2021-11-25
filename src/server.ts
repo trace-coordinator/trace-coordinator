@@ -1,7 +1,7 @@
 import Fastify, { FastifyInstance } from "fastify";
 import pino from "pino";
 
-export const server: FastifyInstance = Fastify({
+export const fastify: FastifyInstance = Fastify({
     logger: pino({
         level: process.env.NODE_ENV ? `info` : `trace`,
         /* <DEV-ONLY> */
