@@ -28,6 +28,8 @@ declare global {
     interface BigInt {
         toJSON(): string;
     }
+
+    type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
 }
 String.prototype.capitalizeOnlyFirstLetter = function () {
     const s = this.toLowerCase();

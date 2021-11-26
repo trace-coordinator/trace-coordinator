@@ -1,4 +1,4 @@
-import { GenericResponse, Query, TspClient, TspClientResponse } from "tsp-typescript-client";
+import { Query, TspClient } from "tsp-typescript-client";
 import config from "config";
 import { WithTraceServerUrl } from "types/tsp";
 import { logger } from "logger";
@@ -14,15 +14,11 @@ import path from "path";
 import { exitWithError } from "lib";
 import { tracer } from "tracer";
 
-class TraceCoordinatorError extends Error {
-    readonly name = TraceCoordinatorError.name;
-}
-
 class TraceServerError extends Error {
     readonly name = TraceServerError.name;
     // statusCode used by fastify for response status code
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    constructor(msg: string, private readonly statusCode?: number) {
+    constructor(readonly msg: string, readonly statusCode?: number) {
         super(msg);
     }
 }
@@ -36,9 +32,8 @@ const newOverloadedTspClient = (url: string) => {
     return tsp;
 };
 
-const handleXyModelNull = (s: string) => (r: WithTraceServerUrl<unknown>) => {
-    if ((r as WithTraceServerUrl<GenericResponse<unknown>>).model === null)
-        throw new TraceServerError(`${prefixErrorMsg(r.trace_server_url)} XY ${s} is null`);
+const handleXyModelNull = (s: string) => (r: Awaited<FetchReturn<`fetchXYTree` | `fetchXY`>>[0]) => {
+    if (r.model === null) throw new TraceServerError(`${prefixErrorMsg(r.trace_server_url)} XY ${s} is null`);
 };
 
 class Coordinator {
@@ -113,73 +108,70 @@ class Coordinator {
 
     public async fetchExperiments() {
         const { E } = tracer.B({ name: `fn ${this.fetchExperiments.name}` });
-        const r = (await this._fetch({
+        const r = await this._fetch({
             op: `fetchExperiments`,
-        })) as AggregateExperimentsPayload[`response_models`];
+        });
         E();
         return r;
     }
 
     public async fetchExperiment(exp_uuid: string) {
         const { E } = tracer.B({ name: `fn ${this.fetchExperiment.name}` });
-        const r = (await this._fetch(
-            { op: `fetchExperiment` },
-            exp_uuid,
-        )) as AggregateExperimentPayload[`response_models`];
+        const r = await this._fetch({ op: `fetchExperiment` }, exp_uuid);
         E();
         return r;
     }
 
     public async fetchOutputs(exp_uuid: string) {
         const { E } = tracer.B({ name: `fn ${this.fetchOutputs.name}` });
-        const r = (await this._fetch(
-            { op: `experimentOutputs` },
-            exp_uuid,
-        )) as AggregateOutputsPayload[`response_models`];
+        const r = await this._fetch({ op: `experimentOutputs` }, exp_uuid);
         E();
         return r;
     }
 
     public async fetchXYTree(exp_uuid: string, output_id: string, query: Query) {
         const { E } = tracer.B({ name: `fn ${this.fetchXYTree.name}` });
-        const r = (await this._fetch(
+        const r = await this._fetch(
             { op: `fetchXYTree`, cb: handleXyModelNull(`tree model`) },
             exp_uuid,
             output_id,
             query,
-        )) as AggregateXYTreePayload[`response_models`];
+        );
         E();
         return r;
     }
 
     public async fetchXY(exp_uuid: string, output_id: string, query: Query) {
         const { E } = tracer.B({ name: `fn ${this.fetchXY.name}` });
-        const r = (await this._fetch(
+        const r = await this._fetch(
             { op: `fetchXY`, cb: handleXyModelNull(`model`) },
             exp_uuid,
             output_id,
             query,
-        )) as AggregateXYModelPayload[`response_models`];
+        );
         E();
         return r;
     }
 
-    private _fetch(
-        { op, cb }: { op: string; cb?: (r: WithTraceServerUrl<unknown>) => void },
-        ...args: unknown[]
-    ) {
-        // @ts-expect-error implicit any is allowed because type is checked anyway
-        if (typeof this._tsps[0][op] !== `function`) {
-            throw new TraceCoordinatorError(`Method ${op} not exist on TSP client`);
-        }
+    private _fetch<O extends SupportedTspOps>(
+        {
+            op,
+            cb,
+        }: {
+            op: O;
+            cb?: (r: Awaited<FetchReturn<O>>[0]) => void;
+        },
+        ...args: Parameters<TspClient[O]>
+    ): // TODO: ts bug: this is the same as FetchReturn<O>
+    Promise<Awaited<FetchReturn<O>>[0][]> {
         return Promise.all(
             this._tsps.map((tsp) =>
-                // @ts-expect-error any tsp[op] is knowned as a function
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-                (tsp[op](...args) as Promise<TspClientResponse<unknown>>).then((r) => {
-                    const rmwurl = r.tryGetModel(
+                // @ts-expect-error ts bug spread arguments
+                tsp[op](...args).then((r) => {
+                    const rm = r.tryGetModel(
                         newTraceServerErrorFactory(prefixErrorMsg(tsp.trace_server_url)),
-                    ) as WithTraceServerUrl<unknown>;
+                    );
+                    const rmwurl = rm as WithTraceServerUrl<typeof rm>;
                     rmwurl.trace_server_url = tsp.trace_server_url;
                     cb?.(rmwurl);
                     return rmwurl;
@@ -188,5 +180,23 @@ class Coordinator {
         );
     }
 }
+
+type SupportedTspOps =
+    | `fetchExperiments`
+    | `fetchExperiment`
+    | `experimentOutputs`
+    | `fetchXYTree`
+    | `fetchXY`;
+type FetchReturn<O> = O extends `fetchExperiments`
+    ? Promise<AggregateExperimentsPayload[`response_models`]>
+    : O extends `fetchExperiment`
+    ? Promise<AggregateExperimentPayload[`response_models`]>
+    : O extends `experimentOutputs`
+    ? Promise<AggregateOutputsPayload[`response_models`]>
+    : O extends `fetchXYTree`
+    ? Promise<AggregateXYTreePayload[`response_models`]>
+    : O extends `fetchXY`
+    ? Promise<AggregateXYModelPayload[`response_models`]>
+    : unknown;
 
 export const coordinator = new Coordinator();
