@@ -112,7 +112,7 @@ class Coordinator {
     }
 
     public async fetchExperiments() {
-        const { E } = tracer.B({ name: this.fetchExperiments.name });
+        const { E } = tracer.B({ name: `fn ${this.fetchExperiments.name}` });
         const r = (await this._fetch({
             op: `fetchExperiments`,
         })) as AggregateExperimentsPayload[`response_models`];
@@ -121,7 +121,7 @@ class Coordinator {
     }
 
     public async fetchExperiment(exp_uuid: string) {
-        const { E } = tracer.B({ name: this.fetchExperiment.name });
+        const { E } = tracer.B({ name: `fn ${this.fetchExperiment.name}` });
         const r = (await this._fetch(
             { op: `fetchExperiment` },
             exp_uuid,
@@ -131,7 +131,7 @@ class Coordinator {
     }
 
     public async fetchOutputs(exp_uuid: string) {
-        const { E } = tracer.B({ name: this.fetchOutputs.name });
+        const { E } = tracer.B({ name: `fn ${this.fetchOutputs.name}` });
         const r = (await this._fetch(
             { op: `experimentOutputs` },
             exp_uuid,
@@ -141,7 +141,7 @@ class Coordinator {
     }
 
     public async fetchXYTree(exp_uuid: string, output_id: string, query: Query) {
-        const { E } = tracer.B({ name: this.fetchXYTree.name });
+        const { E } = tracer.B({ name: `fn ${this.fetchXYTree.name}` });
         const r = (await this._fetch(
             { op: `fetchXYTree`, cb: handleXyModelNull(`tree model`) },
             exp_uuid,
@@ -153,7 +153,7 @@ class Coordinator {
     }
 
     public async fetchXY(exp_uuid: string, output_id: string, query: Query) {
-        const { E } = tracer.B({ name: this.fetchXY.name });
+        const { E } = tracer.B({ name: `fn ${this.fetchXY.name}` });
         const r = (await this._fetch(
             { op: `fetchXY`, cb: handleXyModelNull(`model`) },
             exp_uuid,

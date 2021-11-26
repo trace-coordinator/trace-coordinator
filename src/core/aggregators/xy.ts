@@ -14,7 +14,7 @@ export const aggregateXyTree = (payload: AggregateXYTreePayload): XYTreeResponse
     if (
         payload.output_id === `org.eclipse.tracecompass.analysis.os.linux.core.cpuusage.CpuUsageDataProvider`
     ) {
-        const { E } = tracer.B({ name: aggregateXyTree.name });
+        const { E } = tracer.B({ name: `fn ${aggregateXyTree.name}` });
         const status = new Set<ResponseStatus>();
         status.add(payload.response_models[0].status);
         payload.response_models[0].model.entries.map((e, i) => {
@@ -58,7 +58,7 @@ export const aggregateXyModel = (payload: AggregateXYModelPayload): XYModelRespo
     if (
         payload.output_id === `org.eclipse.tracecompass.analysis.os.linux.core.cpuusage.CpuUsageDataProvider`
     ) {
-        const { E } = tracer.B({ name: aggregateXyModel.name });
+        const { E } = tracer.B({ name: `fn ${aggregateXyModel.name}` });
         const status = new Set<ResponseStatus>();
         status.add(payload.response_models[0].status);
         payload.response_models[0].model.series.map((se, i) => {

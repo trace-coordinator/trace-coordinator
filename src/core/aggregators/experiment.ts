@@ -4,7 +4,7 @@ import { aggregateStatus } from "core/aggregators/lib";
 import { tracer } from "tracer";
 
 export const aggregateExperiment = (payload: AggregateExperimentPayload): Experiment => {
-    const { E } = tracer.B({ name: aggregateExperiment.name });
+    const { E } = tracer.B({ name: `fn ${aggregateExperiment.name}` });
     const e = {
         start: -1n,
         end: 0n,

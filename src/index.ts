@@ -10,6 +10,7 @@ import fastify_cors from "fastify-cors";
 import { fastify } from "server";
 import { logger } from "logger";
 import JSB from "json-bigint";
+import { tracer } from "tracer";
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const JSONbig = JSB({ useNativeBigInt: true });
 
@@ -50,9 +51,11 @@ const opts = {
     },
 };
 void fastify.register(fastify_cors);
-fastify.post(`/tsp/api/dev/createExperimentsFromTraces`, opts, async () => {
+fastify.post(`/tsp/api/dev/createExperimentsFromTraces`, opts, async (request) => {
+    const { E } = tracer.B({ name: `${request.method} ${request.url}` });
     await coordinator.createExperimentsFromTraces();
     logger.debug(`done`);
+    E();
     return `done`;
 });
 void fastify.register(experimentsRoute, opts);
