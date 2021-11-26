@@ -9,6 +9,8 @@ export const aggregateStatus = (status: Set<ResponseStatus>): ResponseStatus => 
         ? ResponseStatus.CANCELLED
         : status.has(ResponseStatus.RUNNING)
         ? ResponseStatus.RUNNING
+        : status.size === 1
+        ? (status.values().next().value as ResponseStatus)
         : ResponseStatus.COMPLETED;
 };
 
