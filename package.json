@@ -5,10 +5,11 @@
     "keywords": [
         "another-trace-coordinator"
     ],
-    "main": "dist/index.js",
     "bin": "dist/index.js",
+    "types": "dist/index.d.js",
+    "typings": "dist/index.d.js",
     "license": "MIT",
-    "repository": "https://github.com/trace-coordinator/another-trace-coordinator",
+    "repository": "https://github.com/trace-coordinator/another-trace-coordinator.git",
     "author": "haoadoresorange",
     "files": [
         "dist",
@@ -16,6 +17,7 @@
     ],
     "scripts": {
         "postinstall": "husky install",
+        "bump-version": "yarn version --no-commit-hooks",
         "prepack": "pinst --disable && yarn build",
         "postpack": "pinst --enable",
         "build": "rimraf dist && gulp",
@@ -93,6 +95,8 @@
         "eslint-config-prettier": "Turn off ESLint rules that conflict with Prettier",
         "eslint-plugin-prettier": "Run Prettier as ESLint rule (no need to run prettier command) and show errors as ESLint errors",
         "ts-jest": "Run Jest directly on TS",
-        "ts-node-dev": "Node dev server for TS"
+        "@zerollup/ts-transform-paths": "Convert import path to relative in compiled files",
+        "ttypescript": "Required for ts-transform-paths",
+        "pinst": "Workaround husky 'npm postinstall' problem when 'npm publish'"
     }
 }
