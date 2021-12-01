@@ -23,8 +23,10 @@ exports.default = () => {
     return require(`merge-stream`)(
         compiled_src.js
             .pipe(require(`gulp-uglify`)({ keep_fnames: true }))
-            .pipe(sourcemaps.write(`.`, { includeContent: false }))
+            .pipe(sourcemaps.write(`.`, { includeContent: false, sourceRoot: `./` }))
             .pipe(gulp.dest(`dist`)),
-        compiled_src.dts.pipe(sourcemaps.write(`.`, { includeContent: false })).pipe(gulp.dest(`dist`)),
+        compiled_src.dts
+            .pipe(sourcemaps.write(`.`, { includeContent: false, sourceRoot: `./` }))
+            .pipe(gulp.dest(`dist`)),
     );
 };
