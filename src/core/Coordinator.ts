@@ -9,7 +9,7 @@ import {
     AggregateXYModelPayload,
     AggregateXYTreePayload,
 } from "types/payload";
-import { readdirSync } from "fs";
+import fs from "fs";
 import path from "path";
 import { exitWithError } from "lib";
 import { tracer } from "tracer";
@@ -37,28 +37,7 @@ const handleXyModelNull = (s: string) => (r: Awaited<FetchReturn<`fetchXYTree` |
 };
 
 class Coordinator {
-    private readonly _tsps: WithTraceServerUrl<TspClient>[];
-
-    constructor() {
-        this._tsps = config.trace_servers_configuration.map((tsc) => {
-            const tsp = newOverloadedTspClient(tsc.url);
-            tsp.checkHealth()
-                .then((r) => {
-                    const rm = r.tryGetModel(
-                        newTraceServerErrorFactory(prefixErrorMsg(tsp.trace_server_url)),
-                    );
-                    if (rm.status !== `UP`)
-                        throw new TraceServerError(
-                            `Error connecting to ${prefixErrorMsg(tsp.trace_server_url)} status: ${
-                                r.getModel()?.status
-                            }`,
-                            500,
-                        );
-                })
-                .catch((e) => exitWithError(e));
-            return tsp;
-        });
-    }
+    private readonly _tsps = config.trace_servers_configuration.map((tsc) => newOverloadedTspClient(tsc.url));
 
     // <DEV>
     public createExperimentsFromTraces() {
@@ -70,23 +49,25 @@ class Coordinator {
                         500,
                     );
                 Promise.all(
-                    readdirSync(config.trace_servers_configuration[i][`traces-uri`], {
-                        withFileTypes: true,
-                    }).flatMap((dirent) => {
-                        const uri = path.resolve(
-                            config.trace_servers_configuration[i][`traces-uri`],
-                            dirent.name,
-                        );
-                        logger.debug(`Import ${uri} to trace server ${tsp.trace_server_url}`);
-                        return dirent.isDirectory()
-                            ? tsp.openTrace(
-                                  new Query({
-                                      name: dirent.name,
-                                      uri,
-                                  }),
-                              )
-                            : [];
-                    }),
+                    fs
+                        .readdirSync(config.trace_servers_configuration[i][`traces-uri`], {
+                            withFileTypes: true,
+                        })
+                        .flatMap((dirent) => {
+                            const uri = path.resolve(
+                                config.trace_servers_configuration[i][`traces-uri`],
+                                dirent.name,
+                            );
+                            logger.debug(`Import ${uri} to trace server ${tsp.trace_server_url}`);
+                            return dirent.isDirectory()
+                                ? tsp.openTrace(
+                                      new Query({
+                                          name: dirent.name,
+                                          uri,
+                                      }),
+                                  )
+                                : [];
+                        }),
                 )
                     .then((rs) =>
                         tsp.createExperiment(
@@ -151,6 +132,30 @@ class Coordinator {
         );
         E();
         return r;
+    }
+
+    public async checkHealth(): Promise<{ status: `UP` | `DOWN` }> {
+        for (const tsp of this._tsps) {
+            try {
+                const status = (await tsp.checkHealth()).tryGetModel(
+                    newTraceServerErrorFactory(prefixErrorMsg(tsp.trace_server_url)),
+                ).status;
+                if (status !== `UP`) {
+                    throw new TraceServerError(
+                        `${prefixErrorMsg(tsp.trace_server_url)} status: ${status}`,
+                        500,
+                    );
+                }
+            } catch (e) {
+                logger.error(e as object);
+                return {
+                    status: `DOWN`,
+                };
+            }
+        }
+        return {
+            status: `UP`,
+        };
     }
 
     private _fetch<O extends SupportedTspOps>(

@@ -91,3 +91,8 @@ export const xyRoute: FastifyPluginCallback = (fastify, opts, done) => {
 
     done();
 };
+
+export const healthRoute: FastifyPluginCallback = (fastify, opts, done) => {
+    fastify.get(`/health`, opts, () => coordinator.checkHealth());
+    done();
+};

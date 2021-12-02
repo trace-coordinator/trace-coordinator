@@ -4,7 +4,7 @@ process.on(`unhandledRejection`, (reason, promise) => {
 });
 import "lib/polyfill";
 import { coordinator } from "core/Coordinator";
-import { experimentsRoute, experimentRoute, outputsRoute, xyRoute } from "routes";
+import { experimentsRoute, experimentRoute, outputsRoute, xyRoute, healthRoute } from "routes";
 import config from "config";
 import fastify_cors from "fastify-cors";
 import { fastify } from "server";
@@ -62,9 +62,8 @@ void fastify.register(experimentsRoute, opts);
 void fastify.register(experimentRoute, opts);
 void fastify.register(outputsRoute, opts);
 void fastify.register(xyRoute, opts);
+void fastify.register(healthRoute, opts);
 
 // start server
-void (async () => {
-    logger.info(`NODE_ENV = ${process.env.NODE_ENV || `development`}`);
-    await fastify.listen(config.port, `0.0.0.0`);
-})();
+logger.info(`NODE_ENV = ${process.env.NODE_ENV || `development`}`);
+void fastify.listen(config.port, `0.0.0.0`);
