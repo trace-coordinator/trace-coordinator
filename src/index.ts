@@ -1,7 +1,4 @@
-process.on(`unhandledRejection`, (reason, promise) => {
-    logger.error(`Unhandled Rejection at:`, promise, `reason:`, reason);
-    process.exit(1);
-});
+/* eslint-disable @typescript-eslint/no-floating-promises */
 import "lib/polyfill";
 import { coordinator } from "core/Coordinator";
 import { experimentsRoute, experimentRoute, outputsRoute, xyRoute, healthRoute } from "routes";
@@ -11,6 +8,11 @@ import { fastify } from "server";
 import { logger } from "logger";
 import JSB from "json-bigint";
 import { tracer } from "tracer";
+import { exitWithError } from "lib";
+process.on(`unhandledRejection`, (reason) => {
+    logger.error(`Unhandled Rejection reason:`);
+    exitWithError(reason);
+});
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const JSONbig = JSB({ useNativeBigInt: true });
 
@@ -50,7 +52,7 @@ const opts = {
         },
     },
 };
-void fastify.register(fastify_cors);
+fastify.register(fastify_cors);
 fastify.post(`/tsp/api/dev/createExperimentsFromTraces`, opts, async (request) => {
     const { E } = tracer.B({ name: `${request.method} ${request.url}` });
     await coordinator.createExperimentsFromTraces();
@@ -58,12 +60,12 @@ fastify.post(`/tsp/api/dev/createExperimentsFromTraces`, opts, async (request) =
     E();
     return `done`;
 });
-void fastify.register(experimentsRoute, opts);
-void fastify.register(experimentRoute, opts);
-void fastify.register(outputsRoute, opts);
-void fastify.register(xyRoute, opts);
-void fastify.register(healthRoute, opts);
+fastify.register(experimentsRoute, opts);
+fastify.register(experimentRoute, opts);
+fastify.register(outputsRoute, opts);
+fastify.register(xyRoute, opts);
+fastify.register(healthRoute, opts);
 
 // start server
 logger.info(`NODE_ENV = ${process.env.NODE_ENV || `development`}`);
-void fastify.listen(config.port, `0.0.0.0`);
+fastify.listen(config.port, `0.0.0.0`);

@@ -3,7 +3,8 @@ import fs from "fs";
 
 export const tracer = new TsTrace();
 tracer.pipe(fs.createWriteStream(`trace-event-format.json`, `utf8`));
-process.on(`SIGINT`, function () {
+process.on(`SIGINT`, () => process.exit(0));
+process.on(`exit`, (code) => {
     tracer.close();
-    process.exit();
+    process.exit(code);
 });
