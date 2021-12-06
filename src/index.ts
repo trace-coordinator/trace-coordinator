@@ -6,15 +6,13 @@ import config from "config";
 import fastify_cors from "fastify-cors";
 import { fastify } from "server";
 import { logger } from "logger";
-import JSB from "json-bigint";
+import JSONB from "when-json-met-bigint";
 import { tracer } from "tracer";
 import { exitWithError } from "lib";
 process.on(`unhandledRejection`, (reason) => {
     logger.error(`Unhandled Rejection reason:`);
     exitWithError(reason);
 });
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const JSONbig = JSB({ useNativeBigInt: true });
 
 /* <DEV-ONLY> */
 fastify.addHook(`onRequest`, (req, _reply_, done) => {
@@ -32,7 +30,7 @@ fastify.addHook(`onResponse`, (req, reply, done) => {
 fastify.addContentTypeParser(`application/json`, { parseAs: `string` }, function (_req_, body, done) {
     try {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const request_body = JSONbig.parse(body as string);
+        const request_body = JSONB.parse(body as string);
         logger.debug(`request.body`);
         if (logger.isLevelEnabled(`debug`)) console.log(request_body);
         done(null, request_body);
@@ -41,7 +39,7 @@ fastify.addContentTypeParser(`application/json`, { parseAs: `string` }, function
         done(err as Error, undefined);
     }
 });
-fastify.setSerializerCompiler(() => (data) => JSONbig.stringify(data));
+fastify.setSerializerCompiler(() => (data) => JSONB.stringify(data));
 
 const opts = {
     prefix: `/tsp/api`,
@@ -68,4 +66,6 @@ fastify.register(healthRoute, opts);
 
 // start server
 logger.info(`NODE_ENV = ${process.env.NODE_ENV || `development`}`);
-fastify.listen(config.port, `0.0.0.0`);
+fastify.listen(config.port, `0.0.0.0`).then(() => {
+    if (process.send) process.send(`COORDINATOR-UP`);
+});
