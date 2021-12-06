@@ -9,7 +9,8 @@ class XyAggregationError extends Error {
     readonly name = XyAggregationError.name;
 }
 
-const isSameEntry = (e1: Entry, e2: Entry) => e1.labels[0] === e2.labels[0] && e1.parentId === e2.parentId;
+const isSameEntry = (e1: Entry, e2: Entry) =>
+    e2 && e1.labels[0] === e2.labels[0] && e1.parentId === e2.parentId;
 export const aggregateXyTree = (payload: AggregateXYTreePayload): XYTreeResponseModel => {
     if (
         payload.output_id === `org.eclipse.tracecompass.analysis.os.linux.core.cpuusage.CpuUsageDataProvider`
@@ -25,6 +26,7 @@ export const aggregateXyTree = (payload: AggregateXYTreePayload): XYTreeResponse
                 if (status.size < payload.response_models.length)
                     status.add(payload.response_models[j].status);
                 const entries = payload.response_models[j].model.entries;
+                if (entries.length === 0) continue;
                 let ee;
                 if (isSameEntry(e, entries[i])) {
                     ee = entries[i];
@@ -53,7 +55,7 @@ export const aggregateXyTree = (payload: AggregateXYTreePayload): XYTreeResponse
     throw new XyAggregationError(`XY tree aggregation not exist for output id ${payload.output_id}`);
 };
 
-const isSameSerie = (se1: XYSeries, se2: XYSeries) => se1.seriesId === se2.seriesId;
+const isSameSerie = (se1: XYSeries, se2: XYSeries) => se2 && se1.seriesId === se2.seriesId;
 export const aggregateXyModel = (payload: AggregateXYModelPayload): XYModelResponseModel => {
     if (
         payload.output_id === `org.eclipse.tracecompass.analysis.os.linux.core.cpuusage.CpuUsageDataProvider`
