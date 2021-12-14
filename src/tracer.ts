@@ -1,4 +1,4 @@
-import { TsTrace } from "ts-trace";
+import { TsTrace } from "ts-trace-event";
 import fs from "fs";
 
 export const tracer = new TsTrace();

@@ -1,6 +1,10 @@
-import { AggregateExperimentPayload, AggregateExperimentsPayload, PAYLOAD_TYPE } from "types/payload";
+import {
+    AggregateExperimentPayload,
+    AggregateExperimentsPayload,
+    PAYLOAD_TYPE,
+} from "types/payload";
 import { WithTraceServerUrl } from "types/tsp";
-import { GenericResponse, OutputDescriptor, ResponseStatus } from "tsp-typescript-client";
+import { GenericResponse, ResponseStatus } from "tsp-typescript-client";
 
 export const aggregateStatus = (status: Set<ResponseStatus>): ResponseStatus => {
     return status.has(ResponseStatus.FAILED)
@@ -44,7 +48,6 @@ export const newGenericResponse = <T>({
     const status = aggregateStatus(aggregated_status);
     return {
         model,
-        output: {} as OutputDescriptor,
         status,
         statusMessage: status.capitalizeOnlyFirstLetter(),
     };

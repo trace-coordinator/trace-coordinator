@@ -27,19 +27,23 @@ fastify.addHook(`onResponse`, (req, reply, done) => {
 /* </DEV-ONLY> */
 
 // custom json parser
-fastify.addContentTypeParser(`application/json`, { parseAs: `string` }, function (_req_, body, done) {
-    try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const request_body = JSONB.parse(body as string);
-        logger.debug(`request.body`);
-        if (logger.isLevelEnabled(`debug`)) console.log(request_body);
-        done(null, request_body);
-    } catch (err) {
-        (err as Error & { statusCode: number }).statusCode = 400;
-        done(err as Error, undefined);
-    }
-});
-fastify.setSerializerCompiler(() => (data) => JSONB.stringify(data));
+fastify.addContentTypeParser(
+    `application/json`,
+    { parseAs: `string` },
+    function (_req_, body, done) {
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const request_body = JSONB.parse(body as string);
+            logger.debug(`request.body`);
+            if (logger.isLevelEnabled(`debug`)) console.log(request_body);
+            done(null, request_body);
+        } catch (err) {
+            (err as Error & { statusCode: number }).statusCode = 400;
+            done(err as Error, undefined);
+        }
+    },
+);
+fastify.setSerializerCompiler(() => (data) => JSONB.stringify(data) as string);
 
 const opts = {
     prefix: `/tsp/api`,

@@ -22,8 +22,9 @@ class TraceServerError extends Error {
         super(msg);
     }
 }
-const newTraceServerErrorFactory = (prefix: string) => (msg: string, status_code?: number) =>
-    new TraceServerError(`${prefix} ${msg}`, status_code);
+const newTraceServerErrorFactory = (prefix: string) => (msg: string, status_code?: number) => {
+    throw new TraceServerError(`${prefix} ${msg}`, status_code);
+};
 const prefixErrorMsg = (url: string) => `[Trace server ${url}] `;
 
 const newOverloadedTspClient = (url: string) => {
@@ -32,12 +33,16 @@ const newOverloadedTspClient = (url: string) => {
     return tsp;
 };
 
-const handleXyModelNull = (s: string) => (r: Awaited<FetchReturn<`fetchXYTree` | `fetchXY`>>[0]) => {
-    if (r.model === null) throw new TraceServerError(`${prefixErrorMsg(r.trace_server_url)} XY ${s} is null`);
-};
+const handleXyModelNull =
+    (s: string) => (r: Awaited<FetchReturn<`fetchXYTree` | `fetchXY`>>[0]) => {
+        if (r.model === null)
+            throw new TraceServerError(`${prefixErrorMsg(r.trace_server_url)} XY ${s} is null`);
+    };
 
 class Coordinator {
-    private readonly _tsps = config.trace_servers_configuration.map((tsc) => newOverloadedTspClient(tsc.url));
+    private readonly _tsps = config.trace_servers_configuration.map((tsc) =>
+        newOverloadedTspClient(tsc.url),
+    );
 
     // <DEV>
     public createExperimentsFromTraces() {
@@ -76,7 +81,9 @@ class Coordinator {
                                 traces: rs.map(
                                     (r) =>
                                         r.tryGetModel(
-                                            newTraceServerErrorFactory(prefixErrorMsg(tsp.trace_server_url)),
+                                            newTraceServerErrorFactory(
+                                                prefixErrorMsg(tsp.trace_server_url),
+                                            ),
                                         ).UUID,
                                 ),
                             }),

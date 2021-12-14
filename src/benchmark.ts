@@ -7,7 +7,13 @@ process.on(`unhandledRejection`, (reason, promise) => {
 import fs from "fs";
 import path from "path";
 import config from "config";
-import { Query, QueryHelper, ResponseStatus, TspClient, TspClientResponse } from "tsp-typescript-client";
+import {
+    Query,
+    QueryHelper,
+    ResponseStatus,
+    TspClient,
+    TspClientResponse,
+} from "tsp-typescript-client";
 import { fork } from "child_process";
 import { performance } from "perf_hooks";
 import fetch from "node-fetch";
@@ -42,7 +48,9 @@ const mode = (() => {
 })();
 
 const url =
-    mode === `trace-coordinator` ? `http://localhost:8080` : config.trace_servers_configuration[0].url;
+    mode === `trace-coordinator`
+        ? `http://localhost:8080`
+        : config.trace_servers_configuration[0].url;
 const server = new TspClient(url + `/tsp/api`);
 
 const queryUntilCompleted = async <M>(
@@ -66,8 +74,8 @@ const queryUntilCompleted = async <M>(
             }
         }
         const r = await query();
-        if (r && completed(r as NonNullable<M>)) {
-            return r as NonNullable<M>;
+        if (r && completed(r as unknown as NonNullable<M>)) {
+            return r as unknown as NonNullable<M>;
         } else await sleep(sleep_time_ms);
     }
 };
@@ -125,9 +133,12 @@ const benchmark = async () => {
         should_log = true;
         await Promise.all(
             fs
-                .readdirSync(`/home/ubuntu/trace-coordinator-test-set/original-clones/trace-server`, {
-                    withFileTypes: true,
-                })
+                .readdirSync(
+                    `/home/ubuntu/trace-coordinator-test-set/original-clones/trace-server`,
+                    {
+                        withFileTypes: true,
+                    },
+                )
                 .flatMap((dirent) => {
                     const uri = path.resolve(
                         `/home/ubuntu/trace-coordinator-test-set/original-clones/trace-server`,
@@ -148,7 +159,12 @@ const benchmark = async () => {
                 server.createExperiment(
                     new Query({
                         name: `experiment`,
-                        traces: rs.map((r) => r.tryGetModel(() => new Error()).UUID),
+                        traces: rs.map(
+                            (r) =>
+                                r.tryGetModel(() => {
+                                    throw new Error();
+                                }).UUID,
+                        ),
                     }),
                 ),
             )
