@@ -329,5 +329,6 @@ const ensureDirExist = (file_path: string) => {
         filename = `${dir}/${basename}-${i}.json`;
     }
     fs.writeFileSync(ensureDirExist(filename), JSON.stringify(result, null, 4));
+    console.log(`Sucessfully writed to ${filename}`.green);
     process.exit(0);
 })();
