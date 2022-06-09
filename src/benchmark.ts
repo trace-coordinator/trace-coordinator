@@ -177,6 +177,7 @@ const statistics = (
 
 // benchmark execution
 type BenchmarkResult = {
+    trace_uris: string[];
     indexing: number;
     cpu_usage_tree: number;
     cpu_usage: number;
@@ -242,6 +243,7 @@ const benchmark = async () => {
     }
 
     const result = {
+        trace_uris: TRACE_URIS,
         average_10: {
             cpu_usage_tree: 0,
             cpu_usage: 0,
