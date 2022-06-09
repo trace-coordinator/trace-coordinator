@@ -108,7 +108,7 @@ const fetchExperimentsAndGetFirst = async () =>
             }
             return experiment.indexingStatus === `COMPLETED` ? true : false;
         },
-        [20000, 10000, 5000, 5000, 3000, 2000, 1000, 1000, 500],
+        1000,
     );
 
 const cpuUsageTree = (experiment: Awaited<ReturnType<typeof fetchExperimentsAndGetFirst>>) =>
@@ -124,7 +124,7 @@ const cpuUsageTree = (experiment: Awaited<ReturnType<typeof fetchExperimentsAndG
             ).tryGetModel(tryGetModelErrorHandler());
         },
         (cpu_usage_tree) => cpu_usage_tree.status === ResponseStatus.COMPLETED,
-        [3000, 2000, 1000, 300],
+        1000,
     );
 const cpuUsage = (
     experiment: Awaited<ReturnType<typeof fetchExperimentsAndGetFirst>>,
@@ -151,7 +151,7 @@ const cpuUsage = (
             ).tryGetModel(tryGetModelErrorHandler());
         },
         (cpu_usage) => cpu_usage.status === ResponseStatus.COMPLETED,
-        [500, 300, 100],
+        1000,
     );
 const statistics = (
     experiment: Awaited<ReturnType<typeof fetchExperimentsAndGetFirst>>,
@@ -172,7 +172,7 @@ const statistics = (
             ).tryGetModel(tryGetModelErrorHandler());
         },
         (statistics) => statistics.status === ResponseStatus.COMPLETED,
-        [3000, 2000, 1000, 300],
+        1000,
     );
 
 // benchmark execution
@@ -197,7 +197,7 @@ const benchmark = async () => {
     await queryUntilCompleted(
         () => Promise.resolve(can_continue),
         () => can_continue,
-        500,
+        100,
     );
     // check health
     if ((await server.checkHealth()).tryGetModel(tryGetModelErrorHandler())?.status !== `UP`)
