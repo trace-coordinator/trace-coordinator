@@ -1,10 +1,10 @@
 import {
-    AggregateExperimentPayload,
-    AggregateExperimentsPayload,
-    PAYLOAD_TYPE,
-} from "types/payload";
-import { WithTraceServerUrl } from "types/tsp";
-import { GenericResponse, ResponseStatus } from "tsp-typescript-client";
+    ExperimentAggregatorPayload,
+    ExperimentsAggregatorPayload,
+    AGGREGATOR_PAYLOAD_TYPE,
+    WithTraceServerUrl,
+} from "../types/payload";
+import { ResponseStatus } from "tsp-typescript-client";
 
 export const aggregateStatus = (status: Set<ResponseStatus>): ResponseStatus => {
     return status.has(ResponseStatus.FAILED)
@@ -19,36 +19,22 @@ export const aggregateStatus = (status: Set<ResponseStatus>): ResponseStatus => 
 };
 
 export const splitExperimentsPayload = (
-    payload: AggregateExperimentsPayload,
-): AggregateExperimentPayload[] => {
-    const eps: { [exp_uuid: string]: AggregateExperimentPayload } = {};
+    payload: ExperimentsAggregatorPayload,
+): ExperimentAggregatorPayload[] => {
+    const result: { [exp_uuid: string]: ExperimentAggregatorPayload } = {};
     payload.response_models.forEach((response_model) => {
-        response_model.forEach((e) => {
-            if (!eps[e.UUID])
-                eps[e.UUID] = {
-                    type: PAYLOAD_TYPE.AGGREGATE_EXPERIMENT,
-                    exp_uuid: e.UUID,
+        response_model.forEach((experiment) => {
+            if (!result[experiment.UUID])
+                result[experiment.UUID] = {
+                    type: AGGREGATOR_PAYLOAD_TYPE.EXPERIMENT,
+                    operation: payload.operation,
+                    step: payload.step,
                     response_models: [],
                 };
-            const ewurl = e as WithTraceServerUrl<typeof e>;
-            ewurl.trace_server_url = response_model.trace_server_url;
-            eps[e.UUID].response_models.push(ewurl);
+            const exp_w_url = experiment as WithTraceServerUrl<typeof experiment>;
+            exp_w_url.trace_server_url = response_model.trace_server_url;
+            result[experiment.UUID].response_models.push(exp_w_url);
         });
     });
-    return Object.values(eps);
-};
-
-export const newGenericResponse = <T>({
-    model,
-    aggregated_status,
-}: {
-    model: T;
-    aggregated_status: Set<ResponseStatus>;
-}): GenericResponse<T> => {
-    const status = aggregateStatus(aggregated_status);
-    return {
-        model,
-        status,
-        statusMessage: status.capitalizeOnlyFirstLetter(),
-    };
+    return Object.values(result);
 };

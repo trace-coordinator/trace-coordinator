@@ -2,3 +2,4 @@ node_modules/
 dist/
 .sig
 trace-event-format.json
+benchmark-results/

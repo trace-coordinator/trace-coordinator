@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import "lib/polyfill";
-import { coordinator } from "core/Coordinator";
-import { experimentsRoute, experimentRoute, outputsRoute, xyRoute, healthRoute } from "routes";
+import { tspRoutes } from "routes";
 import config from "config";
 import fastify_cors from "fastify-cors";
 import { fastify } from "server";
 import { logger } from "logger";
-import JSONB from "when-json-met-bigint";
-import { tracer } from "tracer";
+import { JSONB } from "when-json-met-bigint";
 import { exitWithError } from "lib";
 process.on(`unhandledRejection`, (reason) => {
     logger.error(`Unhandled Rejection reason:`);
@@ -37,9 +35,9 @@ fastify.addContentTypeParser(
             logger.debug(`request.body`);
             if (logger.isLevelEnabled(`debug`)) console.log(request_body);
             done(null, request_body);
-        } catch (err) {
-            (err as Error & { statusCode: number }).statusCode = 400;
-            done(err as Error, undefined);
+        } catch (e) {
+            (e as Error & { statusCode: number }).statusCode = 400;
+            done(e as Error, undefined);
         }
     },
 );
@@ -55,18 +53,7 @@ const opts = {
     },
 };
 fastify.register(fastify_cors);
-fastify.post(`/tsp/api/dev/createExperimentsFromTraces`, opts, async (request) => {
-    const { E } = tracer.B({ name: `${request.method} ${request.url}` });
-    await coordinator.createExperimentsFromTraces();
-    logger.debug(`done`);
-    E();
-    return `done`;
-});
-fastify.register(experimentsRoute, opts);
-fastify.register(experimentRoute, opts);
-fastify.register(outputsRoute, opts);
-fastify.register(xyRoute, opts);
-fastify.register(healthRoute, opts);
+fastify.register(tspRoutes, opts);
 
 // start server
 logger.info(`NODE_ENV = ${process.env.NODE_ENV || `development`}`);

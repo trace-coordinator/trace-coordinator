@@ -1,8 +1,8 @@
-const CLASS_PROPERTY = `classProperty`;
-const PARAMETER = `parameter`;
-const VARIABLE = `variable`;
-const METHOD = `method`;
-const PROPERTY = `property`;
+const class_property = [`classProperty`, `parameterProperty`];
+const parameter = [`parameter`];
+const variable = [`variable`];
+const method = [`method`];
+const property = [`property`];
 
 const string_and_number = [`string`, `number`];
 const func = [`function`];
@@ -68,20 +68,20 @@ module.exports = {
                 format: snake_case,
             },
             {
-                selector: CLASS_PROPERTY,
+                selector: class_property,
                 types: string_and_number,
                 modifiers: [`private`, `readonly`],
                 format: snake_and_UPPER,
                 leadingUnderscore: `require`,
             },
             {
-                selector: CLASS_PROPERTY,
+                selector: class_property,
                 types: string_and_number,
                 modifiers: [`readonly`],
                 format: snake_and_UPPER,
             },
             {
-                selector: CLASS_PROPERTY,
+                selector: class_property,
                 types: boolean,
                 modifiers: [`private`],
                 format: snake_case,
@@ -89,13 +89,13 @@ module.exports = {
                 leadingUnderscore: `require`,
             },
             {
-                selector: CLASS_PROPERTY,
+                selector: class_property,
                 types: boolean,
                 format: snake_case,
                 prefix,
             },
             {
-                selector: CLASS_PROPERTY,
+                selector: class_property,
                 modifiers: private,
                 format: snake_case,
                 leadingUnderscore: `require`,
@@ -105,62 +105,62 @@ module.exports = {
                 format: camelCase,
             },
             {
-                selector: PARAMETER,
+                selector: parameter,
                 types: func,
                 format: camelCase,
             },
             {
-                selector: PARAMETER,
+                selector: parameter,
                 modifiers: [`unused`],
                 format: null,
                 leadingUnderscore: `require`,
                 trailingUnderscore: `require`,
             },
             {
-                selector: VARIABLE,
+                selector: variable,
                 types: string_and_number,
                 modifiers: [`const`, `global`],
                 format: snake_and_UPPER,
             },
             {
-                selector: VARIABLE,
+                selector: variable,
                 types: boolean,
                 format: snake_case,
                 prefix,
             },
             {
-                selector: VARIABLE,
+                selector: variable,
                 types: func,
                 format: camelCase,
             },
             {
-                selector: VARIABLE,
+                selector: variable,
                 types: func,
                 modifiers: [`destructured`],
                 format: [...camelCase, ...PascalCase],
             },
             {
-                selector: METHOD,
+                selector: method,
                 modifiers: private,
                 format: camelCase,
                 leadingUnderscore: `require`,
             },
             {
-                selector: METHOD,
+                selector: method,
                 format: camelCase,
             },
             {
-                selector: PROPERTY,
+                selector: property,
                 types: func,
                 format: camelCase,
             },
             {
-                selector: PROPERTY,
+                selector: property,
                 types: string_and_number,
                 format: [...snake_and_UPPER, ...camelCase, ...PascalCase],
             },
             {
-                selector: PROPERTY,
+                selector: property,
                 format: [...snake_case, ...camelCase, ...PascalCase],
             },
             {

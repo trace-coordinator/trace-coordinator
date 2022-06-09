@@ -1,19 +1,19 @@
-import { AggregateOutputsPayload } from "types/payload";
+import { OutputsAggregatorPayload } from "./types/payload";
 import { OutputDescriptor } from "tsp-typescript-client";
-import { tracer } from "tracer";
+import { Aggregator } from "./types/Aggregator";
 
-export const aggregateOutputs = (payload: AggregateOutputsPayload): OutputDescriptor[] => {
-    const { E } = tracer.B({ name: `fn ${aggregateOutputs.name}` });
-    const added = new Set<string>();
-    const o = payload.response_models.flatMap((response_model) =>
-        response_model.filter((o) => {
-            if (!added.has(o.id)) {
-                added.add(o.id);
-                return true;
-            }
-            return false;
-        }),
-    );
-    E();
-    return o;
-};
+export const outputs_aggregator = new Aggregator(
+    (payload: OutputsAggregatorPayload): OutputDescriptor[] => {
+        const added: Record<string, boolean> = {};
+        return payload.response_models.flatMap((response_model) =>
+            response_model.filter((o) => {
+                if (!added[o.id]) {
+                    added[o.id] = true;
+                    return true;
+                }
+                return false;
+            }),
+        );
+    },
+    `outputs_aggregator`,
+);

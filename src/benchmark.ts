@@ -1,3 +1,10 @@
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const STATISTICS_STEP = undefined;
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const TRACE_URIS = [
+    `/home/baby/dev-sync/trace-coordinator/TraceCompassTutorialTraces/103-compare-package-managers/pacman`,
+];
+
 /* eslint-disable @typescript-eslint/no-floating-promises */
 process.on(`unhandledRejection`, (reason, promise) => {
     console.error(`Unhandled Rejection at:`, promise, `reason:`, reason);
@@ -5,217 +12,128 @@ process.on(`unhandledRejection`, (reason, promise) => {
 });
 
 import fs from "fs";
-import path from "path";
-import config from "config";
-import {
-    Query,
-    QueryHelper,
-    ResponseStatus,
-    TspClient,
-    TspClientResponse,
-} from "tsp-typescript-client";
+import { Query, QueryHelper, ResponseStatus, TspClient } from "tsp-typescript-client";
 import { fork } from "child_process";
 import { performance } from "perf_hooks";
 import fetch from "node-fetch";
 import "colors";
+import path from "path";
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+const exitBenchmark = (msg: string) => {
+    console.error(msg.red);
+    process.exit(1);
+};
 
+// startup trace-coordinator
 let can_continue = false;
-
-const mode = (() => {
+const benchmark_mode = (() => {
     const modes = [`trace-coordinator`, `trace-server`] as const;
-    if (modes.includes(process.argv[2] as typeof modes[number])) {
-        if ((process.argv[2] as typeof modes[number]) === `trace-coordinator`) {
+    const mode = process.argv[2] as typeof modes[number];
+    if (modes.includes(mode)) {
+        if (mode === `trace-coordinator`) {
             const child = fork(`dist/index.js`, { env: { ...process.env, NODE_ENV: `production` } })
                 .on(`error`, (e) => {
                     console.error(e.toString().red);
-                    console.error(`error fork trace-coordinator, halting benchmark...`.red);
-                    process.exit(1);
+                    exitBenchmark(`Error starting trace-coordinator, halting benchmark...`);
                 })
                 .on(`message`, (msg) => {
                     if (msg.toString() === `COORDINATOR-UP`) can_continue = true;
                 });
-            process.on(`exit`, () => {
-                child.kill();
-            });
-        } else {
-            can_continue = true;
-        }
-        return process.argv[2] as typeof modes[number];
+            process.on(`exit`, () => child.kill());
+        } else can_continue = true;
+        return mode;
     }
-    console.error(`Please specify whether to run benchmark for ${modes.join(` or `)}`.red);
-    process.exit(1);
+    return exitBenchmark(`Please specify whether to run benchmark for ${modes.join(` or `)}`);
 })();
 
-const url =
-    mode === `trace-coordinator`
-        ? `http://localhost:8080`
-        : config.trace_servers_configuration[0].url;
-const server = new TspClient(url + `/tsp/api`);
+// should log progress or not
+const should_log = benchmark_mode === `trace-coordinator` ? false : true;
 
-const queryUntilCompleted = async <M>(
-    query: () => Promise<M>,
-    completed: (m: NonNullable<M>) => boolean,
+// create TspClient for this benchmark
+const server_url = `http://localhost:8080`;
+const server = new TspClient(server_url + `/tsp/api`);
+
+// helper function
+const queryUntilCompleted = async <T>(
+    query: () => Promise<T>,
+    completed: (query_result: T) => boolean,
     ms?: number | number[],
 ) => {
-    let begin = 0;
-    let i = begin;
+    let i_begin = 0;
+    let i = i_begin;
     let sleep_time_ms = typeof ms === `number` ? ms : 100;
-    const has_array_ms = Array.isArray(ms) && ms.length > 0;
     // eslint-disable-next-line no-constant-condition
     while (true) {
-        if (has_array_ms) {
-            sleep_time_ms = ms[i];
+        // gracefully iterate sleep time in provided time array
+        if (Array.isArray(ms) && ms.length > 0) {
+            sleep_time_ms = Number(ms[i]);
             if (i === ms.length - 1) {
-                if (begin < ms.length - 1) begin++;
-                i = begin;
-            } else {
-                i++;
-            }
+                if (i_begin < ms.length - 1) i_begin++;
+                i = i_begin;
+            } else i++;
         }
-        const r = await query();
-        if (r && completed(r as unknown as NonNullable<M>)) {
-            return r as unknown as NonNullable<M>;
-        } else await sleep(sleep_time_ms);
+        const query_result = await query();
+        if (completed(query_result)) return query_result;
+        else await sleep(sleep_time_ms);
     }
 };
 
-const checkIsOkFalse = <T extends TspClientResponse<unknown>>(r: T, op: string) => {
-    if (!r.isOk()) {
-        console.error(`${op} isOk() false, halting benchmark...`.red);
-        process.exit(1);
-    }
-    return r;
-};
+// helper function
+const tryGetModelErrorHandler =
+    (custom_msg = ``) =>
+    (msg: string) => {
+        console.error(custom_msg.red);
+        return exitBenchmark(msg);
+    };
 
-const fetchExperiment = async (should_log: boolean) =>
+// helper function
+// const isOkNotFalse = <T extends TspClientResponse<unknown>>(response: T, operation: string) =>
+//     response.isOk() ? response : exitBenchmark(`${operation} isOk() false, halting benchmark...`);
+
+// benchmarking functions
+const fetchExperimentsAndGetFirst = async () =>
     await queryUntilCompleted(
         async () => {
-            if (should_log) console.log(`fetchExperiment`.red);
-            const r = checkIsOkFalse(await server.fetchExperiments(), `Fetch experiment`);
-            const e = r.getModel();
-            return e ? e[0] : null;
+            if (should_log) console.log(`fetchExperiment`.green);
+            return (await server.fetchExperiments()).tryGetModel(
+                tryGetModelErrorHandler(`Something is wrong with experiments response model`),
+            )[0];
         },
-        (e) => (e.indexingStatus === `COMPLETED` || e.indexingStatus === `CLOSED` ? true : false),
+        (experiment) => {
+            if (!experiment)
+                return exitBenchmark(`Something is wrong, experiment is ${experiment as string}`);
+            if (experiment.indexingStatus === `CLOSED`) {
+                server.experimentOutputs(experiment.UUID);
+                return false;
+            }
+            return experiment.indexingStatus === `COMPLETED` ? true : false;
+        },
         [20000, 10000, 5000, 5000, 3000, 2000, 1000, 1000, 500],
     );
 
-type R = {
-    indexing: number;
-    cpu_usage_tree: number;
-    cpu_usage: number;
-    // ram_tree: number;
-    // ram_states: number;
-    total: number;
-};
-type Result = [R, Omit<R, `indexing` | `total`>];
-const benchmark = async () => {
-    await queryUntilCompleted(
-        () => Promise.resolve(can_continue),
-        () => can_continue,
-        500,
-    );
-    try {
-        const r = await server.checkHealth();
-        if (!r.isOk() || r.getModel()?.status !== `UP`)
-            throw new Error(`Server checkHealth failed at ${url}`);
-    } catch (e) {
-        console.error((e as Error).toString().red);
-        process.exit(1);
-    }
-
-    let should_log = false;
-    if (mode === `trace-coordinator`)
-        await fetch(`${url}/tsp/api/dev/createExperimentsFromTraces`, {
-            method: `POST`,
-        });
-    else {
-        should_log = true;
-        await Promise.all(
-            fs
-                .readdirSync(
-                    `/home/ubuntu/trace-coordinator-test-set/original-clones/trace-server`,
-                    {
-                        withFileTypes: true,
-                    },
-                )
-                .flatMap((dirent) => {
-                    const uri = path.resolve(
-                        `/home/ubuntu/trace-coordinator-test-set/original-clones/trace-server`,
-                        dirent.name,
-                    );
-                    console.log(`Import ${uri} to trace server ${url}`);
-                    return dirent.isDirectory()
-                        ? server.openTrace(
-                              new Query({
-                                  name: dirent.name,
-                                  uri,
-                              }),
-                          )
-                        : [];
-                }),
-        )
-            .then((rs) =>
-                server.createExperiment(
-                    new Query({
-                        name: `experiment`,
-                        traces: rs.map(
-                            (r) =>
-                                r.tryGetModel(() => {
-                                    throw new Error();
-                                }).UUID,
-                        ),
-                    }),
-                ),
-            )
-            .catch((e) => {
-                console.error((e as Error).toString().red);
-                process.exit(1);
-            });
-    }
-
-    // indexing
-    const result = [{}, {}] as Result;
-    let start_time = performance.now();
-    let experiment = await fetchExperiment(should_log);
-    result[0].indexing = performance.now() - start_time;
-
-    const start_time_total = performance.now();
-    await server.experimentOutputs(experiment.UUID);
-
-    // re-fetch experiment if trace-server was closed before benchmark
-    if (experiment.end === 0n) {
-        start_time = performance.now();
-        experiment = await fetchExperiment(should_log);
-        result[0].indexing = performance.now() - start_time;
-    }
-
-    // XY tree
-    start_time = performance.now();
-    const cpu_usage_tree = await queryUntilCompleted(
+const cpuUsageTree = (experiment: Awaited<ReturnType<typeof fetchExperimentsAndGetFirst>>) =>
+    queryUntilCompleted(
         async () => {
-            if (should_log) console.log(`fetchXYtree`.red);
-            return checkIsOkFalse(
+            if (should_log) console.log(`fetchXYtree`.green);
+            return (
                 await server.fetchXYTree(
                     experiment.UUID,
                     `org.eclipse.tracecompass.analysis.os.linux.core.cpuusage.CpuUsageDataProvider`,
-                    QueryHelper.timeQuery([experiment.start, experiment.end]),
-                ),
-                `Fetch xy tree`,
-            ).getModel();
+                    QueryHelper.timeQuery([experiment.start, experiment.end], { wait: true }),
+                )
+            ).tryGetModel(tryGetModelErrorHandler());
         },
         (cpu_usage_tree) => cpu_usage_tree.status === ResponseStatus.COMPLETED,
         [3000, 2000, 1000, 300],
     );
-    result[0].cpu_usage_tree = performance.now() - start_time;
-    result[1].cpu_usage_tree = cpu_usage_tree.model.entries.length;
-
-    // XY
-    start_time = performance.now();
-    const cpu_usage = await queryUntilCompleted(
+const cpuUsage = (
+    experiment: Awaited<ReturnType<typeof fetchExperimentsAndGetFirst>>,
+    cpu_usage_tree: Awaited<ReturnType<typeof cpuUsageTree>>,
+) =>
+    queryUntilCompleted(
         async () => {
-            if (should_log) console.log(`fetchXY`.red);
-            return checkIsOkFalse(
+            if (should_log) console.log(`fetchXY`.green);
+            return (
                 await server.fetchXY(
                     experiment.UUID,
                     `org.eclipse.tracecompass.analysis.os.linux.core.cpuusage.CpuUsageDataProvider`,
@@ -227,59 +145,187 @@ const benchmark = async () => {
                             Math.floor(1500 * 0.85),
                         ),
                         cpu_usage_tree.model.entries.map((e) => e.id),
+                        { wait: true },
                     ),
-                ),
-                `Fetch xy`,
-            ).getModel();
+                )
+            ).tryGetModel(tryGetModelErrorHandler());
         },
         (cpu_usage) => cpu_usage.status === ResponseStatus.COMPLETED,
         [500, 300, 100],
     );
-    result[0].cpu_usage = performance.now() - start_time;
-    result[1].cpu_usage = cpu_usage.model.series.length;
+const statistics = (
+    experiment: Awaited<ReturnType<typeof fetchExperimentsAndGetFirst>>,
+    step?: number,
+) =>
+    queryUntilCompleted(
+        async () => {
+            if (should_log) console.log(`fetchXYtree`.green);
+            return (
+                await server.fetchXYTree(
+                    experiment.UUID,
+                    `org.eclipse.tracecompass.analysis.os.linux.core.statistics.StatisticsDataProvider`,
+                    QueryHelper.timeQuery([experiment.start, experiment.end], {
+                        step,
+                        wait: true,
+                    }),
+                )
+            ).tryGetModel(tryGetModelErrorHandler());
+        },
+        (statistics) => statistics.status === ResponseStatus.COMPLETED,
+        [3000, 2000, 1000, 300],
+    );
 
-    result[0].total = performance.now() - start_time_total;
+// benchmark execution
+type BenchmarkResult = {
+    indexing: number;
+    cpu_usage_tree: number;
+    cpu_usage: number;
+    statistics: {
+        step?: number;
+        result: number;
+    };
+    average_10: {
+        cpu_usage_tree: number;
+        cpu_usage: number;
+        statistics: number;
+        statistics_2: number;
+    };
+};
+const benchmark = async () => {
+    // wait until trace-coordinator is stated
+    await queryUntilCompleted(
+        () => Promise.resolve(can_continue),
+        () => can_continue,
+        500,
+    );
+    // check health
+    if ((await server.checkHealth()).tryGetModel(tryGetModelErrorHandler())?.status !== `UP`)
+        return exitBenchmark(`Server checkHealth failed`);
+
+    // create experiment
+    if (benchmark_mode === `trace-coordinator`)
+        await fetch(`${server_url}/tsp/api/dev/createExperimentsFromTraces`, {
+            method: `POST`,
+            headers: {
+                "Content-Type": `application/json`,
+            },
+            body: JSON.stringify({
+                parameters: {
+                    uris: TRACE_URIS,
+                },
+            }),
+        });
+    else {
+        await Promise.all(
+            TRACE_URIS.map((uri, i) => {
+                return typeof uri === `string`
+                    ? server.openTrace(
+                          new Query({
+                              name: `trace-${i}`,
+                              uri,
+                          }),
+                      )
+                    : exitBenchmark(`uri ${uri as string} is not string`);
+            }),
+        )
+            .then((responses) =>
+                server.createExperiment(
+                    new Query({
+                        name: `experiment`,
+                        traces: responses.map(
+                            (response) => response.tryGetModel(tryGetModelErrorHandler()).UUID,
+                        ),
+                    }),
+                ),
+            )
+            .catch((e) => exitBenchmark((e as Error).toString()));
+    }
+
+    const result = {
+        average_10: {
+            cpu_usage_tree: 0,
+            cpu_usage: 0,
+            statistics: 0,
+            statistics_2: 0,
+        },
+    } as BenchmarkResult;
+
+    // indexing
+    let start_time = performance.now();
+    const experiment = await fetchExperimentsAndGetFirst();
+    result.indexing = performance.now() - start_time;
+
+    // CPU Usage tree
+    start_time = performance.now();
+    const cpu_usage_tree = await cpuUsageTree(experiment);
+    result.cpu_usage_tree = performance.now() - start_time;
+
+    // CPU Usage
+    start_time = performance.now();
+    await cpuUsage(experiment, cpu_usage_tree);
+    result.cpu_usage = performance.now() - start_time;
+
+    // Statistics
+    const step = benchmark_mode === `trace-coordinator` ? STATISTICS_STEP : undefined;
+    start_time = performance.now();
+    await statistics(experiment, step);
+    result.statistics = {
+        step,
+        result: performance.now() - start_time,
+    };
+
+    for (let i = 0; i < 10; i++) {
+        // CPU Usage tree
+        start_time = performance.now();
+        const cpu_usage_tree = await cpuUsageTree(experiment);
+        result.average_10.cpu_usage_tree += performance.now() - start_time;
+
+        // CPU Usage
+        start_time = performance.now();
+        await cpuUsage(experiment, cpu_usage_tree);
+        result.average_10.cpu_usage += performance.now() - start_time;
+
+        // Statistics
+        start_time = performance.now();
+        await statistics(experiment);
+        result.average_10.statistics += performance.now() - start_time;
+
+        if (benchmark_mode === `trace-coordinator`) {
+            start_time = performance.now();
+            await statistics(experiment, 2);
+            result.average_10.statistics_2 += performance.now() - start_time;
+        }
+    }
+
+    Object.keys(result.average_10).forEach((key) => {
+        result.average_10[key as keyof BenchmarkResult[`average_10`]] /= 10;
+    });
+
     return result;
 };
 
+// helper function
+const ensureDirExist = (file_path: string) => {
+    const dirname = path.dirname(file_path);
+    if (!fs.existsSync(dirname)) {
+        ensureDirExist(dirname);
+        fs.mkdirSync(dirname);
+    }
+    return file_path;
+};
+
+// main
 (async () => {
     const result = await benchmark();
 
-    const other_result_file =
-        mode === `trace-coordinator`
-            ? `${benchmark.name}-trace-server.txt`
-            : `${benchmark.name}-trace-coordinator.txt`;
-    const benchmark_vs = `benchmark-vs.txt`;
-    if (!fs.existsSync(other_result_file)) {
-        fs.writeFileSync(`${benchmark.name}-${mode}.txt`, JSON.stringify(result, null, 4));
-        try {
-            fs.unlinkSync(benchmark_vs);
-        } catch (e) {
-            e;
-        }
-        console.log(`${other_result_file} not exist, produce it first to obtain a comparison`.red);
-    } else {
-        const other_result = JSON.parse(fs.readFileSync(other_result_file, `utf8`)) as Result;
-        fs.unlinkSync(other_result_file);
-        const result_comparison: R = {
-            indexing: result[0].indexing / other_result[0].indexing,
-            cpu_usage_tree: result[0].cpu_usage_tree / other_result[0].cpu_usage_tree,
-            cpu_usage: result[0].cpu_usage / other_result[0].cpu_usage,
-            total: result[0].total / other_result[0].total,
-        };
-
-        let msg;
-        msg = `${mode} is slower by \n${JSON.stringify(result_comparison, null, 4)}\n`;
-        console.log(msg.red);
-        fs.writeFileSync(benchmark_vs, msg);
-        const query_count = `query count`;
-        const first = `${mode} ${query_count}`;
-        const second = `${
-            mode === `trace-coordinator` ? `trace-server` : `trace-coordinator`
-        } ${query_count}`;
-        msg = JSON.stringify({ [first]: result[1], [second]: other_result[1] }, null, 4) + `\n`;
-        console.log(msg.red);
-        fs.appendFileSync(benchmark_vs, msg);
+    const dir = `benchmark-results/${benchmark_mode}`;
+    const basename = `benchmark`;
+    let i = 0;
+    let filename = `${dir}/${basename}-${i}.json`;
+    while (fs.existsSync(filename)) {
+        i++;
+        filename = `${dir}/${basename}-${i}.json`;
     }
+    fs.writeFileSync(ensureDirExist(filename), JSON.stringify(result, null, 4));
     process.exit(0);
 })();

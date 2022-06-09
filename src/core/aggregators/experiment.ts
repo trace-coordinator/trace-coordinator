@@ -1,35 +1,32 @@
-import { AggregateExperimentPayload } from "types/payload";
-import { Trace, ResponseStatus, Experiment } from "tsp-typescript-client";
+import { ExperimentAggregatorPayload } from "./types/payload";
+import { ResponseStatus, Experiment } from "tsp-typescript-client";
 import { aggregateStatus } from "core/aggregators/lib";
-import { tracer } from "tracer";
+import { Aggregator } from "./types/Aggregator";
 
-export const aggregateExperiment = (payload: AggregateExperimentPayload): Experiment => {
-    const { E } = tracer.B({ name: `fn ${aggregateExperiment.name}` });
-    const e = {
-        start: -1n,
-        end: 0n,
-        nbEvents: 0,
-        traces: new Array<Trace>(payload.response_models[0].traces.length * payload.response_models.length),
-    };
-    const status = new Set<ResponseStatus>();
-    let gi = 0;
-    payload.response_models.forEach((response_model) => {
-        if (e.start === -1n || response_model.start < e.start) e.start = response_model.start;
-        if (response_model.end > e.end) e.end = response_model.end;
-        e.nbEvents += response_model.nbEvents;
-        status.add(response_model.indexingStatus as ResponseStatus);
-        response_model.traces.forEach((trace, i) => {
-            e.traces[gi + i] = trace;
-        });
-        gi += response_model.traces.length;
-    });
-    e.traces.length = gi;
-    const r = {
-        name: payload.response_models[0].name,
-        UUID: payload.exp_uuid,
-        indexingStatus: aggregateStatus(status) as string,
-        ...e,
-    };
-    E();
-    return r;
-};
+export const experiment_aggregator = new Aggregator(
+    (payload: ExperimentAggregatorPayload): Experiment => {
+        const first = payload.response_models[0];
+        const status = new Set<ResponseStatus>();
+        status.add(first.indexingStatus as ResponseStatus);
+        let next_index = first.traces.length;
+        first.traces.length *= payload.response_models.length;
+
+        for (let i = 1; i < payload.response_models.length; i++) {
+            if (payload.response_models[i].start < first.start)
+                first.start = payload.response_models[i].start;
+            if (payload.response_models[i].end > first.end)
+                first.end = payload.response_models[i].end;
+            first.nbEvents += payload.response_models[i].nbEvents;
+            status.add(payload.response_models[i].indexingStatus as ResponseStatus);
+            payload.response_models[i].traces.forEach((trace) => {
+                first.traces[next_index] = trace;
+                next_index++;
+            });
+            first.traces.length = next_index;
+        }
+
+        first.indexingStatus = aggregateStatus(status) as string;
+        return first;
+    },
+    `experiment_aggregator`,
+);

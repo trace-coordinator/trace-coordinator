@@ -5760,10 +5760,10 @@ ts-node@^9.0.0:
     source-map-support "^0.5.17"
     yn "3.1.1"
 
-ts-trace-event@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/ts-trace-event/-/ts-trace-event-0.2.0.tgz#8fa4a82e275c5978f3d50f64bbf30db2e507a1d7"
-  integrity sha512-ez8sRoRnozZkaMFWVAf9sgsimEZoDh6X5P2lCpdl9u5GCv06c6TnbZl27hS+uj4JT7r4+uSflG6ifnIBYyy/mA==
+ts-trace-event@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/ts-trace-event/-/ts-trace-event-0.4.0.tgz#7581ca13ef69c83c653643188d533ec1437a5a2b"
+  integrity sha512-Xql/qlxKVE1JlEi+7EvQYZkZ8C7zMHPwxC6BinIcxa+gZEnAuXCHIQmBedX85cQT/ZZ2YyMgVTE4OuKgg81qGw==
 
 tsconfig@^7.0.0:
   version "7.0.0"

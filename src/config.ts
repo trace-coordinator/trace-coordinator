@@ -31,12 +31,14 @@ try {
                 return tmp.map((tsc: TraceServerConfiguration, i) => {
                     if (typeof tsc.url !== `string`)
                         throw new ParseConfigurationError(
-                            `Trace server number ${i} base url wrong format or missing in configuration`,
+                            `Trace server configuration number ${i} base url wrong format or missing`,
                         );
                     return tsc;
                 });
             } else {
-                throw new ParseConfigurationError(`Trace servers configuration wrong format or missing`);
+                throw new ParseConfigurationError(
+                    `Trace servers configuration wrong format or missing`,
+                );
             }
         })(),
     };
