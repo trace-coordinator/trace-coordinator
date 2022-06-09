@@ -17,7 +17,6 @@ import { fork } from "child_process";
 import { performance } from "perf_hooks";
 import fetch from "node-fetch";
 import "colors";
-import path from "path";
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 const exitBenchmark = (msg: string) => {
     console.error(msg.red);
@@ -57,24 +56,13 @@ const server = new TspClient(server_url + `/tsp/api`);
 const queryUntilCompleted = async <T>(
     query: () => Promise<T>,
     completed: (query_result: T) => boolean,
-    ms?: number | number[],
+    ms: (() => number) | number,
 ) => {
-    let i_begin = 0;
-    let i = i_begin;
-    let sleep_time_ms = typeof ms === `number` ? ms : 100;
     // eslint-disable-next-line no-constant-condition
     while (true) {
-        // gracefully iterate sleep time in provided time array
-        if (Array.isArray(ms) && ms.length > 0) {
-            sleep_time_ms = Number(ms[i]);
-            if (i === ms.length - 1) {
-                if (i_begin < ms.length - 1) i_begin++;
-                i = i_begin;
-            } else i++;
-        }
         const query_result = await query();
         if (completed(query_result)) return query_result;
-        else await sleep(sleep_time_ms);
+        else await sleep(typeof ms === `function` ? ms() : ms);
     }
 };
 
@@ -108,7 +96,10 @@ const fetchExperimentsAndGetFirst = async () =>
             }
             return experiment.indexingStatus === `COMPLETED` ? true : false;
         },
-        1000,
+        (() => {
+            let i = 0;
+            return () => (i++ % 2 === 0 ? 3000 : 1500);
+        })(),
     );
 
 const cpuUsageTree = (experiment: Awaited<ReturnType<typeof fetchExperimentsAndGetFirst>>) =>
@@ -306,29 +297,26 @@ const benchmark = async () => {
     return result;
 };
 
-// helper function
-const ensureDirExist = (file_path: string) => {
-    const dirname = path.dirname(file_path);
-    if (!fs.existsSync(dirname)) {
-        ensureDirExist(dirname);
-        fs.mkdirSync(dirname);
-    }
-    return file_path;
-};
-
 // main
 (async () => {
     const result = await benchmark();
+    const result_file = `benchmark-results.json`;
+    const current_result = fs.existsSync(result_file)
+        ? (JSON.parse(fs.readFileSync(result_file, `utf8`)) as Record<
+              typeof benchmark_mode,
+              Record<string, typeof result>
+          >)
+        : {
+              "trace-coordinator": {},
+              "trace-server": {},
+          };
 
-    const dir = `benchmark-results/${benchmark_mode}`;
-    const basename = `benchmark`;
     let i = 0;
-    let filename = `${dir}/${basename}-${i}.json`;
-    while (fs.existsSync(filename)) {
+    while (current_result[benchmark_mode][i]) {
         i++;
-        filename = `${dir}/${basename}-${i}.json`;
     }
-    fs.writeFileSync(ensureDirExist(filename), JSON.stringify(result, null, 4));
-    console.log(`Sucessfully writed to ${filename}`.green);
+    current_result[benchmark_mode][i] = result;
+    fs.writeFileSync(result_file, JSON.stringify(current_result, null, 4));
+    console.log(`Sucessfully writed to result.${benchmark_mode}.${i}`);
     process.exit(0);
 })();
