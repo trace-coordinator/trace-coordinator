@@ -1,5 +1,5 @@
 node_modules/
 dist/
 .sig
-trace-event-format.json
-benchmark-results/
+trace-event-formats/
+benchmark-results.json
