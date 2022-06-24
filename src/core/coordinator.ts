@@ -45,7 +45,7 @@ class Coordinator {
     );
 
     // <DEV>
-    public createExperimentsFromTraces(trace_uris: string[]) {
+    public createExperimentsFromTraces(trace_uris: string[] | undefined, wait = false) {
         if (!Array.isArray(trace_uris))
             throw new TraceServerError(`uris must be an array of string`, 400);
         return Promise.all(
@@ -71,6 +71,7 @@ class Coordinator {
                         tsp.createExperiment(
                             new Query({
                                 name: `experiment`,
+                                wait,
                                 traces: responses.map(
                                     (response) =>
                                         response.tryGetModel(

@@ -18,9 +18,10 @@ export const cpuUsageXY = (payload: XYModelAggregatorPayload): XYModelResponseMo
             if (isSameSerie(original_serie, series[i])) {
                 similar_serie = series[i];
             } else {
-                series.forEach((serie, k) => {
-                    if (k !== i && isSameSerie(original_serie, serie)) similar_serie = serie;
-                });
+                similar_serie = series[series.length - 1];
+                // series.forEach((serie, k) => {
+                //     if (k !== i && isSameSerie(original_serie, serie)) similar_serie = serie;
+                // });
             }
             if (similar_serie) {
                 // TODO: ts bug: compiler doesn't infer similar_serie type when use inside map

@@ -23,9 +23,10 @@ export const cpuUsageTree = (payload: XYTreeAggregatorPayload): XYTreeResponseMo
             if (isSameEntry(original_entry, entries[i])) {
                 similar_entry = entries[i];
             } else {
-                entries.forEach((entry, k) => {
-                    if (k !== i && isSameEntry(original_entry, entry)) similar_entry = entry;
-                });
+                similar_entry = entries[entries.length - 1];
+                // entries.forEach((entry, k) => {
+                //     if (k !== i && isSameEntry(original_entry, entry)) similar_entry = entry;
+                // });
             }
             if (similar_entry) {
                 percentage += parseFloat(similar_entry.labels[2]);

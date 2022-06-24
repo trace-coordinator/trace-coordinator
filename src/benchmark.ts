@@ -194,7 +194,18 @@ const benchmark = async () => {
     if ((await server.checkHealth()).tryGetModel(tryGetModelErrorHandler())?.status !== `UP`)
         return exitBenchmark(`Server checkHealth failed`);
 
-    // create experiment
+    const result = {
+        trace_uris: TRACE_URIS,
+        average_10: {
+            cpu_usage_tree: 0,
+            cpu_usage: 0,
+            statistics: 0,
+            statistics_2: 0,
+        },
+    } as BenchmarkResult;
+
+    // create experiment & indexing
+    let start_time = performance.now();
     if (benchmark_mode === `trace-coordinator`)
         await fetch(`${server_url}/tsp/api/dev/createExperimentsFromTraces`, {
             method: `POST`,
@@ -204,6 +215,7 @@ const benchmark = async () => {
             body: JSON.stringify({
                 parameters: {
                     uris: TRACE_URIS,
+                    wait: true,
                 },
             }),
         });
@@ -227,24 +239,13 @@ const benchmark = async () => {
                         traces: responses.map(
                             (response) => response.tryGetModel(tryGetModelErrorHandler()).UUID,
                         ),
+                        wait: true,
                     }),
                 ),
             )
             .catch((e) => exitBenchmark((e as Error).toString()));
     }
 
-    const result = {
-        trace_uris: TRACE_URIS,
-        average_10: {
-            cpu_usage_tree: 0,
-            cpu_usage: 0,
-            statistics: 0,
-            statistics_2: 0,
-        },
-    } as BenchmarkResult;
-
-    // indexing
-    let start_time = performance.now();
     const experiment = await fetchExperimentsAndGetFirst();
     result.indexing = performance.now() - start_time;
 

@@ -103,12 +103,15 @@ export const tspRoutes: FastifyPluginCallback = (fastify, opts, done) => {
 
     fastify.get(`/health`, opts, () => coordinator.checkHealth());
 
-    fastify.post<{ Body: { parameters: { uris: string[] } } }>(
+    fastify.post<{ Body: { parameters: { uris: string[]; wait: boolean } } }>(
         `/dev/createExperimentsFromTraces`,
         opts,
         async (request) => {
             const { E } = tracer.B({ name: `${request.method} ${request.url}` });
-            await coordinator.createExperimentsFromTraces(request?.body?.parameters?.uris);
+            await coordinator.createExperimentsFromTraces(
+                request?.body?.parameters?.uris,
+                request?.body?.parameters?.wait,
+            );
             logger.debug(`done`);
             E();
             return `done`;
