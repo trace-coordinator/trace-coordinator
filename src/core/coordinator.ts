@@ -9,7 +9,7 @@ import {
     XYTreeAggregatorPayload,
     WithTraceServerUrl,
 } from "./aggregators/types/payload";
-import { exitWithError } from "lib";
+import { exitWithError, uuid } from "lib";
 import { tracer } from "tracer";
 
 class TraceServerError extends Error {
@@ -89,7 +89,7 @@ class Coordinator {
     }
 
     public async fetchExperiments() {
-        const { E } = tracer.B({ name: `fn ${this.fetchExperiments.name}` });
+        const { E } = tracer.B({ name: `fn ${this.fetchExperiments.name} ${uuid()}` });
         const result = await this._fetch({
             operation: `fetchExperiments`,
         });
@@ -98,21 +98,21 @@ class Coordinator {
     }
 
     public async fetchExperiment(exp_uuid: string) {
-        const { E } = tracer.B({ name: `fn ${this.fetchExperiment.name}` });
+        const { E } = tracer.B({ name: `fn ${this.fetchExperiment.name} ${uuid()}` });
         const result = await this._fetch({ operation: `fetchExperiment` }, exp_uuid);
         E();
         return result;
     }
 
     public async fetchOutputs(exp_uuid: string) {
-        const { E } = tracer.B({ name: `fn ${this.fetchOutputs.name}` });
+        const { E } = tracer.B({ name: `fn ${this.fetchOutputs.name} ${uuid()}` });
         const result = await this._fetch({ operation: `experimentOutputs` }, exp_uuid);
         E();
         return result;
     }
 
     public async fetchXYTree(exp_uuid: string, output_id: string, query: Query) {
-        const { E } = tracer.B({ name: `fn ${this.fetchXYTree.name}` });
+        const { E } = tracer.B({ name: `fn ${this.fetchXYTree.name} ${uuid()}` });
         const result = await this._fetch(
             { operation: `fetchXYTree`, cb: handleModelNull(`XY tree model`) },
             exp_uuid,
@@ -124,7 +124,7 @@ class Coordinator {
     }
 
     public async fetchXY(exp_uuid: string, output_id: string, query: Query) {
-        const { E } = tracer.B({ name: `fn ${this.fetchXY.name}` });
+        const { E } = tracer.B({ name: `fn ${this.fetchXY.name} ${uuid()}` });
         const result = await this._fetch(
             { operation: `fetchXY`, cb: handleModelNull(`XY model`) },
             exp_uuid,

@@ -4,10 +4,11 @@ import { aggregate } from "core/aggregators";
 import { AGGREGATOR_PAYLOAD_TYPE } from "core/aggregators/types/payload";
 import { Query } from "tsp-typescript-client";
 import { tracer } from "tracer";
+import { uuid } from "lib";
 
 export const tspRoutes: FastifyPluginCallback = (fastify, opts, done) => {
     fastify.get<{ Body: Query }>(`/experiments`, opts, async (request) => {
-        const { E } = tracer.B({ name: `${request.method} ${request.url}` });
+        const { E } = tracer.B({ name: `${request.method} ${request.url} ${uuid()}` });
         const result = aggregate({
             type: AGGREGATOR_PAYLOAD_TYPE.EXPERIMENTS,
             ...extractOptionalParameters(request.body),
@@ -21,7 +22,7 @@ export const tspRoutes: FastifyPluginCallback = (fastify, opts, done) => {
         `/experiments/:exp_uuid`,
         opts,
         async (request) => {
-            const { E } = tracer.B({ name: `${request.method} ${request.url}` });
+            const { E } = tracer.B({ name: `${request.method} ${request.url} ${uuid()}` });
             const result = aggregate({
                 type: AGGREGATOR_PAYLOAD_TYPE.EXPERIMENT,
                 ...extractOptionalParameters(request.body),
@@ -36,7 +37,7 @@ export const tspRoutes: FastifyPluginCallback = (fastify, opts, done) => {
         `/experiments/:exp_uuid/outputs`,
         opts,
         async (request) => {
-            const { E } = tracer.B({ name: `${request.method} ${request.url}` });
+            const { E } = tracer.B({ name: `${request.method} ${request.url} ${uuid()}` });
             const result = aggregate({
                 type: AGGREGATOR_PAYLOAD_TYPE.OUTPUTS,
                 ...extractOptionalParameters(request.body),
@@ -52,7 +53,7 @@ export const tspRoutes: FastifyPluginCallback = (fastify, opts, done) => {
         Params: { exp_uuid: string; output_id: string };
     }>(`/experiments/:exp_uuid/outputs/XY/:output_id/tree`, opts, async (request) => {
         const { E } = tracer.B({
-            name: `${request.method} ${request.url}`,
+            name: `${request.method} ${request.url} ${uuid()}`,
         });
         const { operation, step } = extractOptionalParameters(request.body);
         let i = typeof step === `number` ? 0 : step;
@@ -84,7 +85,7 @@ export const tspRoutes: FastifyPluginCallback = (fastify, opts, done) => {
         Params: { exp_uuid: string; output_id: string };
     }>(`/experiments/:exp_uuid/outputs/XY/:output_id/xy`, opts, async (request) => {
         const { E } = tracer.B({
-            name: `${request.method} ${request.url}`,
+            name: `${request.method} ${request.url} ${uuid()}`,
         });
         const result = aggregate({
             ...extractOptionalParameters(request.body),
@@ -106,7 +107,7 @@ export const tspRoutes: FastifyPluginCallback = (fastify, opts, done) => {
         `/dev/createExperimentsFromTraces`,
         opts,
         async (request) => {
-            const { E } = tracer.B({ name: `${request.method} ${request.url}` });
+            const { E } = tracer.B({ name: `${request.method} ${request.url} ${uuid()}` });
             await coordinator.createExperimentsFromTraces(
                 request?.body?.parameters?.uris,
                 request?.body?.parameters?.wait,

@@ -1,5 +1,6 @@
 import { OutputUrl, Optional } from "./payload";
 import { tracer } from "tracer";
+import { uuid } from "lib";
 
 export class AggregatorError extends Error {
     readonly name = AggregatorError.name;
@@ -22,14 +23,13 @@ export class Aggregator<P extends Partial<OutputUrl> & Optional> {
     }
 
     public aggregate(payload: P): object {
-        const { E: gE } = tracer.B({ name: `aggregator.aggregate` });
+        const { E: gE } = tracer.B({ name: `aggregator.aggregate ${uuid()}` });
         if (typeof this._aggregator === `function`) {
-            const { E } = tracer.B({ name: `aggregator ${this._name}` });
+            const { E } = tracer.B({ name: `aggregator ${this._name} ${uuid()}` });
             const result = this._aggregator(payload);
             E();
             return result;
         }
-        let pid = 0;
         try {
             if (!payload.output_url && !payload.operation)
                 throw new AggregatorError(
@@ -40,11 +40,11 @@ export class Aggregator<P extends Partial<OutputUrl> & Optional> {
                 .join(`/`);
             if (!this._aggregator[path])
                 throw new AggregatorError(`Aggregator not found at ${path} in ${this._name}`);
-            pid = tracer.B({ name: `aggregator ${this._name}/${path}` }).pid;
+            const { E } = tracer.B({ name: `aggregator ${this._name}/${path} ${uuid()}` });
             const result = this._aggregator[path](payload);
+            E();
             return result;
         } finally {
-            tracer.E({ pid });
             gE();
         }
     }

@@ -6,7 +6,7 @@ import fastify_cors from "fastify-cors";
 import { fastify } from "server";
 import { logger } from "logger";
 import { JSONB } from "when-json-met-bigint";
-import { exitWithError } from "lib";
+import { exitWithError, uuid } from "lib";
 import { tracer } from "tracer";
 process.on(`unhandledRejection`, (reason) => {
     logger.error(`Unhandled Rejection reason:`);
@@ -30,9 +30,8 @@ fastify.addContentTypeParser(
     `application/json`,
     { parseAs: `string` },
     function (_req_, body, done) {
-        let pid = 0;
+        const { E } = tracer.B({ name: `fn JSONB.parse ${uuid()}` });
         try {
-            pid = tracer.B({ name: `fn JSONB.parse` }).pid;
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const request_body = JSONB.parse(body as string);
             logger.debug(`request.body`);
@@ -42,12 +41,12 @@ fastify.addContentTypeParser(
             (e as Error & { statusCode: number }).statusCode = 400;
             done(e as Error, undefined);
         } finally {
-            tracer.E({ pid });
+            E();
         }
     },
 );
 fastify.setSerializerCompiler(() => (data) => {
-    const { E } = tracer.B({ name: `fn JSONB.stringify` });
+    const { E } = tracer.B({ name: `fn JSONB.stringify ${uuid()}` });
     const result = JSONB.stringify(data) as string;
     E();
     return result;
