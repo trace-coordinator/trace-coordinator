@@ -13,6 +13,24 @@ process.on(`unhandledRejection`, (reason) => {
     exitWithError(reason);
 });
 
+const untracedParse = JSONB.parse;
+JSONB.parse = (...args: Parameters<typeof untracedParse>) => {
+    const { E } = tracer.B({ name: `fn JSONB.parse ${uuid()}` });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const result = untracedParse(...args);
+    E();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return result;
+};
+const untracedStringify = JSONB.stringify;
+// @ts-expect-error generic function type error
+JSONB.stringify = (...args: Parameters<typeof untracedStringify>) => {
+    const { E } = tracer.B({ name: `fn JSONB.stringify ${uuid()}` });
+    const result = untracedStringify(...args);
+    E();
+    return result;
+};
+
 /* <DEV-ONLY> */
 fastify.addHook(`onRequest`, (req, _reply_, done) => {
     logger.debug({ reqId: undefined }, `[${req.id as string}].onRequest ${req.raw.url}`);
@@ -30,7 +48,6 @@ fastify.addContentTypeParser(
     `application/json`,
     { parseAs: `string` },
     function (_req_, body, done) {
-        const { E } = tracer.B({ name: `fn JSONB.parse ${uuid()}` });
         try {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const request_body = JSONB.parse(body as string);
@@ -40,17 +57,10 @@ fastify.addContentTypeParser(
         } catch (e) {
             (e as Error & { statusCode: number }).statusCode = 400;
             done(e as Error, undefined);
-        } finally {
-            E();
         }
     },
 );
-fastify.setSerializerCompiler(() => (data) => {
-    const { E } = tracer.B({ name: `fn JSONB.stringify ${uuid()}` });
-    const result = JSONB.stringify(data) as string;
-    E();
-    return result;
-});
+fastify.setSerializerCompiler(() => (data) => JSONB.stringify(data) as string);
 
 const opts = {
     prefix: `/tsp/api`,
