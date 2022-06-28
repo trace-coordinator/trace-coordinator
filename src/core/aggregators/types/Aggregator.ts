@@ -1,6 +1,5 @@
 import { OutputUrl, Optional } from "./payload";
 import { tracer } from "tracer";
-import { logger } from "logger";
 
 export class AggregatorError extends Error {
     readonly name = AggregatorError.name;
@@ -30,6 +29,7 @@ export class Aggregator<P extends Partial<OutputUrl> & Optional> {
             E();
             return result;
         }
+        let pid = 0;
         try {
             if (!payload.output_url && !payload.operation)
                 throw new AggregatorError(
@@ -38,14 +38,13 @@ export class Aggregator<P extends Partial<OutputUrl> & Optional> {
             const path = [payload.output_url, payload.operation, payload.step]
                 .filter((v) => (v != null && typeof v.toString === `function` ? true : false))
                 .join(`/`);
-            logger.debug(path);
             if (!this._aggregator[path])
                 throw new AggregatorError(`Aggregator not found at ${path} in ${this._name}`);
-            const { E } = tracer.B({ name: `aggregator ${this._name}/${path}` });
+            pid = tracer.B({ name: `aggregator ${this._name}/${path}` }).pid;
             const result = this._aggregator[path](payload);
-            E();
             return result;
         } finally {
+            tracer.E({ pid });
             gE();
         }
     }

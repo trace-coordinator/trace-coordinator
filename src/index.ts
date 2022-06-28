@@ -7,6 +7,7 @@ import { fastify } from "server";
 import { logger } from "logger";
 import { JSONB } from "when-json-met-bigint";
 import { exitWithError } from "lib";
+import { tracer } from "tracer";
 process.on(`unhandledRejection`, (reason) => {
     logger.error(`Unhandled Rejection reason:`);
     exitWithError(reason);
@@ -29,7 +30,9 @@ fastify.addContentTypeParser(
     `application/json`,
     { parseAs: `string` },
     function (_req_, body, done) {
+        let pid = 0;
         try {
+            pid = tracer.B({ name: `fn JSONB.parse` }).pid;
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const request_body = JSONB.parse(body as string);
             logger.debug(`request.body`);
@@ -38,10 +41,17 @@ fastify.addContentTypeParser(
         } catch (e) {
             (e as Error & { statusCode: number }).statusCode = 400;
             done(e as Error, undefined);
+        } finally {
+            tracer.E({ pid });
         }
     },
 );
-fastify.setSerializerCompiler(() => (data) => JSONB.stringify(data) as string);
+fastify.setSerializerCompiler(() => (data) => {
+    const { E } = tracer.B({ name: `fn JSONB.stringify` });
+    const result = JSONB.stringify(data) as string;
+    E();
+    return result;
+});
 
 const opts = {
     prefix: `/tsp/api`,

@@ -4,7 +4,6 @@ import { aggregate } from "core/aggregators";
 import { AGGREGATOR_PAYLOAD_TYPE } from "core/aggregators/types/payload";
 import { Query } from "tsp-typescript-client";
 import { tracer } from "tracer";
-import { logger } from "logger";
 
 export const tspRoutes: FastifyPluginCallback = (fastify, opts, done) => {
     fastify.get<{ Body: Query }>(`/experiments`, opts, async (request) => {
@@ -112,7 +111,6 @@ export const tspRoutes: FastifyPluginCallback = (fastify, opts, done) => {
                 request?.body?.parameters?.uris,
                 request?.body?.parameters?.wait,
             );
-            logger.debug(`done`);
             E();
             return `done`;
         },
@@ -135,12 +133,6 @@ const extractOptionalParameters = (() => {
             // @ts-expect-error access private field
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
             const parameter = request_body?.parameters?.[key];
-            logger.debug(
-                `Extracting ${key} field in request body, expecting type ${typeof map_keys_types[
-                    key
-                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                ]}, found value ${parameter} with type ${typeof parameter}`,
-            );
             if (typeof parameter === typeof map_keys_types[key]) {
                 map_keys_types[key as keyof T] = parameter as T[typeof key];
             } else delete map_keys_types[key];
