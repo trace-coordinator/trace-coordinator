@@ -12,7 +12,15 @@ process.on(`unhandledRejection`, (reason, promise) => {
 });
 
 import fs from "fs";
-import { Query, QueryHelper, ResponseStatus, TspClient } from "tsp-typescript-client";
+import {
+    Entry,
+    EntryModel,
+    GenericResponse,
+    Query,
+    QueryHelper,
+    ResponseStatus,
+    TspClient,
+} from "tsp-typescript-client";
 import { fork } from "child_process";
 import { performance } from "perf_hooks";
 import fetch from "node-fetch";
@@ -77,6 +85,13 @@ const tryGetModelErrorHandler =
 // helper function
 // const isOkNotFalse = <T extends TspClientResponse<unknown>>(response: T, operation: string) =>
 //     response.isOk() ? response : exitBenchmark(`${operation} isOk() false, halting benchmark...`);
+function bytesToSize(bytes: number) {
+    const sizes = [`Bytes`, `KB`, `MB`, `GB`, `TB`];
+    if (bytes === 0) return `n/a`;
+    const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)) as unknown as string, 10);
+    if (i === 0) return `${bytes} ${sizes[i]})`;
+    return `${(bytes / 1024 ** i).toFixed(1)} ${sizes[i]}`;
+}
 
 // benchmarking functions
 const fetchExperimentsAndGetFirst = async () =>
@@ -106,42 +121,41 @@ const cpuUsageTree = (experiment: Awaited<ReturnType<typeof fetchExperimentsAndG
     queryUntilCompleted(
         async () => {
             if (should_log) console.log(`fetchXYtree`.green);
-            return (
-                await server.fetchXYTree(
-                    experiment.UUID,
-                    `org.eclipse.tracecompass.analysis.os.linux.core.cpuusage.CpuUsageDataProvider`,
-                    QueryHelper.timeQuery([experiment.start, experiment.end], { wait: true }),
-                )
-            ).tryGetModel(tryGetModelErrorHandler());
+            return await server.fetchXYTree(
+                experiment.UUID,
+                `org.eclipse.tracecompass.analysis.os.linux.core.cpuusage.CpuUsageDataProvider`,
+                QueryHelper.timeQuery([experiment.start, experiment.end], { wait: true }),
+            );
         },
-        (cpu_usage_tree) => cpu_usage_tree.status === ResponseStatus.COMPLETED,
+        (cpu_usage_tree) =>
+            cpu_usage_tree.tryGetModel(tryGetModelErrorHandler()).status ===
+            ResponseStatus.COMPLETED,
         1000,
     );
 const cpuUsage = (
     experiment: Awaited<ReturnType<typeof fetchExperimentsAndGetFirst>>,
-    cpu_usage_tree: Awaited<ReturnType<typeof cpuUsageTree>>,
+    cpu_usage_tree: GenericResponse<EntryModel<Entry>>,
 ) =>
     queryUntilCompleted(
         async () => {
             if (should_log) console.log(`fetchXY`.green);
-            return (
-                await server.fetchXY(
-                    experiment.UUID,
-                    `org.eclipse.tracecompass.analysis.os.linux.core.cpuusage.CpuUsageDataProvider`,
-                    QueryHelper.selectionTimeQuery(
-                        // copy-paste from thei-trace-ext
-                        QueryHelper.splitRangeIntoEqualParts(
-                            experiment.start,
-                            experiment.end,
-                            Math.floor(1500 * 0.85),
-                        ),
-                        cpu_usage_tree.model.entries.map((e) => e.id),
-                        { wait: true },
+            return await server.fetchXY(
+                experiment.UUID,
+                `org.eclipse.tracecompass.analysis.os.linux.core.cpuusage.CpuUsageDataProvider`,
+                QueryHelper.selectionTimeQuery(
+                    // copy-paste from thei-trace-ext
+                    QueryHelper.splitRangeIntoEqualParts(
+                        experiment.start,
+                        experiment.end,
+                        Math.floor(1500 * 0.85),
                     ),
-                )
-            ).tryGetModel(tryGetModelErrorHandler());
+                    cpu_usage_tree.model.entries.map((e) => e.id),
+                    { wait: true },
+                ),
+            );
         },
-        (cpu_usage) => cpu_usage.status === ResponseStatus.COMPLETED,
+        (cpu_usage) =>
+            cpu_usage.tryGetModel(tryGetModelErrorHandler()).status === ResponseStatus.COMPLETED,
         1000,
     );
 const statistics = (
@@ -151,18 +165,17 @@ const statistics = (
     queryUntilCompleted(
         async () => {
             if (should_log) console.log(`fetchXYtree`.green);
-            return (
-                await server.fetchXYTree(
-                    experiment.UUID,
-                    `org.eclipse.tracecompass.analysis.os.linux.core.statistics.StatisticsDataProvider`,
-                    QueryHelper.timeQuery([experiment.start, experiment.end], {
-                        step,
-                        wait: true,
-                    }),
-                )
-            ).tryGetModel(tryGetModelErrorHandler());
+            return await server.fetchXYTree(
+                experiment.UUID,
+                `org.eclipse.tracecompass.analysis.os.linux.core.statistics.StatisticsDataProvider`,
+                QueryHelper.timeQuery([experiment.start, experiment.end], {
+                    step,
+                    wait: true,
+                }),
+            );
         },
-        (statistics) => statistics.status === ResponseStatus.COMPLETED,
+        (statistics) =>
+            statistics.tryGetModel(tryGetModelErrorHandler()).status === ResponseStatus.COMPLETED,
         1000,
     );
 
@@ -170,11 +183,18 @@ const statistics = (
 type BenchmarkResult = {
     trace_uris: string[];
     indexing: number;
-    cpu_usage_tree: number;
-    cpu_usage: number;
+    cpu_usage_tree: {
+        result: number;
+        size: string;
+    };
+    cpu_usage: {
+        result: number;
+        size: string;
+    };
     statistics: {
         step?: number;
         result: number;
+        size: string;
     };
     average_10: {
         cpu_usage_tree: number;
@@ -252,20 +272,30 @@ const benchmark = async () => {
     // CPU Usage tree
     start_time = performance.now();
     const cpu_usage_tree = await cpuUsageTree(experiment);
-    result.cpu_usage_tree = performance.now() - start_time;
+    result.cpu_usage_tree = {
+        result: performance.now() - start_time,
+        size: bytesToSize(Buffer.byteLength(cpu_usage_tree.getText(), `utf8`)),
+    };
 
     // CPU Usage
     start_time = performance.now();
-    await cpuUsage(experiment, cpu_usage_tree);
-    result.cpu_usage = performance.now() - start_time;
+    const cpu_usage = await cpuUsage(
+        experiment,
+        cpu_usage_tree.tryGetModel(tryGetModelErrorHandler()),
+    );
+    result.cpu_usage = {
+        result: performance.now() - start_time,
+        size: bytesToSize(Buffer.byteLength(cpu_usage.getText(), `utf8`)),
+    };
 
     // Statistics
     const step = benchmark_mode === `trace-coordinator` ? STATISTICS_STEP : undefined;
     start_time = performance.now();
-    await statistics(experiment, step);
+    const stats = await statistics(experiment, step);
     result.statistics = {
         step,
         result: performance.now() - start_time,
+        size: bytesToSize(Buffer.byteLength(stats.getText(), `utf8`)),
     };
 
     for (let i = 0; i < 10; i++) {
@@ -276,7 +306,7 @@ const benchmark = async () => {
 
         // CPU Usage
         start_time = performance.now();
-        await cpuUsage(experiment, cpu_usage_tree);
+        await cpuUsage(experiment, cpu_usage_tree.tryGetModel(tryGetModelErrorHandler()));
         result.average_10.cpu_usage += performance.now() - start_time;
 
         // Statistics
